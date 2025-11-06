@@ -1,0 +1,208 @@
+# Copilot Instructions for Invoicer Project
+
+## Project Overview
+
+Invoicer is a Next.js application designed to handle document processing and conversion to structured formats (JSON/CSV).
+
+## Package Management
+
+- Always use `pnpm` as the package manager
+- Install dependencies using CLI commands:
+
+```bash
+# Adding dependencies
+pnpm add <package-name>
+
+# Adding dev dependencies
+pnpm add -D <package-name>
+
+# Updating dependencies
+pnpm update <package-name>
+
+# Installing all dependencies
+pnpm install
+```
+
+## Scalability Guidelines
+
+### Code Organization
+
+- Place reusable components in `/components`
+- Place page-specific components in their respective page directories
+- Use `/lib` for utility functions and shared logic
+- Keep `/hooks` for custom React hooks
+- Store types in `/types` directory
+
+### Performance
+
+- Implement lazy loading for components when possible
+- Use Next.js Image component for optimized image loading
+- Implement proper caching strategies
+- Use React.memo() for expensive computations
+
+### State Management
+
+- Use React Context for global state when needed
+- Implement proper state isolation
+- Consider using Zustand for complex state management
+
+## Maintainability Guidelines
+
+### Code Style
+
+- Follow consistent naming conventions:
+  - Components: PascalCase
+  - Functions: camelCase
+  - Files: kebab-case
+- Use TypeScript for type safety
+- Implement proper error handling
+- Write meaningful comments for complex logic
+
+### Testing
+
+- Write unit tests for components
+- Implement integration tests for critical flows
+- Use proper test naming conventions
+- Maintain test coverage
+
+### Documentation
+
+- Document component props using TypeScript interfaces
+- Add JSDoc comments for complex functions
+- Keep README.md updated with new features
+- Document environment variables
+
+## Separation of Concerns
+
+### Component Structure
+
+```
+components/
+  ui/           # Reusable UI components
+  forms/        # Form-related components
+  layout/       # Layout components
+  features/     # Feature-specific components
+```
+
+### Logic Separation
+
+- Keep business logic in separate services
+- Use custom hooks for shared behaviors
+- Implement proper data fetching patterns
+- Separate UI and logic concerns
+
+### API Integration
+
+- Keep API calls in separate service files
+- Implement proper error handling
+- Use TypeScript interfaces for API responses
+- Implement proper loading states
+
+## Developer Friendly Practices
+
+### Code Organization
+
+- Maintain consistent file structure
+- Use absolute imports
+- Keep components focused and small
+- Follow single responsibility principle
+
+### Development Flow
+
+- Use proper Git commit messages
+- Implement proper branch naming
+- Document breaking changes
+- Keep dependencies updated
+
+### Error Handling
+
+```typescript
+// Example error handling pattern
+try {
+  // Operation
+} catch (error) {
+  if (error instanceof CustomError) {
+    // Handle specific error
+  } else {
+    // Handle generic error
+  }
+}
+```
+
+### Component Template
+
+```typescript
+// Example component structure
+import { type FC } from 'react'
+import { type ComponentProps } from './types'
+
+export const Component: FC<ComponentProps> = ({
+  prop1,
+  prop2,
+}) => {
+  // State and hooks
+
+  // Helper functions
+
+  // Effects
+
+  // Render
+  return (
+    // JSX
+  )
+}
+```
+
+## Dependency Installation Guidelines
+
+### UI Dependencies
+
+```bash
+pnpm add @radix-ui/react-dialog
+pnpm add @radix-ui/react-dropdown-menu
+pnpm add @radix-ui/react-slot
+```
+
+### Development Dependencies
+
+```bash
+pnpm add -D eslint
+pnpm add -D prettier
+pnpm add -D typescript
+```
+
+### Common Dependencies
+
+```bash
+pnpm add zod           # Schema validation
+pnpm add axios         # HTTP client
+pnpm add date-fns      # Date utilities
+pnpm add react-query   # Data fetching
+```
+
+## File Structure
+
+```
+invoicer/
+├── app/               # Next.js app directory
+├── components/        # Reusable components
+├── hooks/            # Custom React hooks
+├── lib/              # Utilities and helpers
+├── pages/            # Page components
+├── public/           # Static assets
+├── styles/           # Global styles
+└── types/            # TypeScript types
+```
+
+## Best Practices
+
+1. Always implement proper loading states
+2. Handle edge cases and errors
+3. Implement proper form validation
+4. Use proper TypeScript types
+5. Keep components focused and small
+6. Implement proper SEO practices
+7. Follow accessibility guidelines
+8. Implement proper testing
+9. Use proper code splitting
+10. Keep dependencies updated

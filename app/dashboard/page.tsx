@@ -1,3 +1,4 @@
+"use client";
 import AnimatedListItemUse from "@/components/AnimatedListItemUse";
 import { AppSidebar } from "@/components/app-sidebar";
 import FileUploadForm from "@/components/FileUploader";
@@ -17,7 +18,7 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-
+import { DialogDemo } from "@/components/UploadDialog";
 export default function Page() {
   return (
     <SidebarProvider>
@@ -41,7 +42,10 @@ export default function Page() {
             </Breadcrumb>
           </div>
           <div className="absolute top-0 right-0 m-3">
-            <Button className="top-0 right-0">Upload Invoice</Button>
+            {/* <Button className="top-0 right-0" onClick={UploadDialog}>
+              Upload Invoice
+            </Button> */}
+            <DialogDemo />
           </div>
         </header>
         <div className="flex flex-1 flex-col gap-4 p-4 pt-0">

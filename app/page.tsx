@@ -1,21 +1,27 @@
 import { Button } from "@/components/ui/button";
 import Navbar from "@/components/ui/Navbar";
-import ReverseTriangleGradient from "@/components/gradient";
 import Prism from "@/components/Prism";
-import StarBorder from "@/components/StarBorder";
+import MagicBento from "@/components/MagicBento";
+import NavbarMenu from "@/components/NavBarMenu";
+import HeroSection from "@/pages/home/HeroSection";
+
 export default function Home() {
   return (
-    <>
-      <div className="flex justify-center items-center h-screen w-screen">
-        <Navbar></Navbar>
-        <Button
-          className="fixed top-10  right-1 z-50 mr-15 "
-          variant={"secondary"}
-        >
+    <main className="relative">
+      {/* Navbar */}
+      <div className="fixed top-0 w-full z-50"></div>
+      <Navbar />
+      <div className=""></div>
+      {/* <div className="hidden md:visible fixed top-0 right-0 z-50 mt-10">
+        <Button variant={"secondary"} className="mx-2">
           Login
         </Button>
-        <Button className="fixed top-10  right-1 z-50 mr-39">Signup</Button>
-        <Prism
+        <Button className="mx-4">Signup</Button>
+      </div> */}
+      <NavbarMenu />
+      {/* Hero Section with Prism */}
+      <section className="h-screen w-screen flex items-center justify-center relative overflow-hidden">
+        {/* <Prism
           animationType="hover"
           timeScale={2}
           height={3.5}
@@ -25,24 +31,30 @@ export default function Home() {
           colorFrequency={1}
           noise={0.2}
           glow={0.5}
-        ></Prism>
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="flex flex-col justify-center items-center">
-            <div className="text-white text-6xl text-center bg-inherit w-[700px] mb-9">
-              AI Platform for Teams Buried in Manual Paperwork
-            </div>
-            <div className="mb-9">
-              Turn complex documents into structured insights to JSON and CSV
-              format
-            </div>
-            <div>
-              <Button className="w-[250px] text-[18px] flex">
-                Get Started
-              </Button>
-            </div>
-          </div>
-        </div>
+        /> */}
+
+        {/* Hero Content */}
+        <HeroSection />
+
+        {/* Gradient Fade Transition */}
+        <div className="absolute bottom-0 left-0 right-0 h-[60px] bg-gradient-to-b from-transparent to-[#001133]/90 backdrop-blur-sm"></div>
+      </section>
+      {/* Next Section */}
+      <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-b from-[#001133] to-black">
+        {/* <MagicBento
+          bentoWidth="3000px"
+          textAutoHide={true}
+          enableStars={false}
+          enableSpotlight={true}
+          enableBorderGlow={true}
+          enableTilt={true}
+          enableMagnetism={true}
+          clickEffect={true}
+          spotlightRadius={300}
+          particleCount={12}
+          glowColor="132, 0, 255"
+        /> */}
       </div>
-    </>
+    </main>
   );
 }
