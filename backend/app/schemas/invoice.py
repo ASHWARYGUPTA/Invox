@@ -31,6 +31,8 @@ class InvoiceUpdate(BaseModel):
     vendor_name: Optional[str] = None
     amount_due: Optional[float] = None
     due_date: Optional[date] = None
+    invoice_date: Optional[date] = None
+    currency_code: Optional[str] = None
     status: Optional[str] = None
     
     class Config:

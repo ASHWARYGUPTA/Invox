@@ -1,30 +1,36 @@
+# AI and Processing
 google-genai
-imap-tools
-requests
-fastapi
-uvicorn[standard]
-pydantic
-python-dotenv
 PyMuPDF
-python-multipart
 Pillow
+
+# Email and Communication
 imap-tools
-requests
-httpx
 email-validator
 
+# Gmail API (OAuth and Service)
 google-api-python-client
 google-auth-oauthlib
 google-auth-httplib2
 
+# Web Framework
+fastapi
+uvicorn[standard]
+python-multipart
+pydantic
+pydantic-settings
 
+# HTTP Clients
+requests
+httpx
+
+# Database
 sqlalchemy
-psycopg2-binary 
-alembic 
+psycopg2-binary
+alembic
 
-
-python-jose[cryptography]  
+# Authentication and Security
+python-jose[cryptography]
 passlib[bcrypt]
 
-
-pydantic-settings
+# Configuration
+python-dotenv

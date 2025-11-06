@@ -1,41 +1,49 @@
-import AnimatedListItemUse from "@/components/AnimatedListItemUse";
-import { AppSidebar } from "@/components/app-sidebar";
-import FileUploadForm from "@/components/FileUploader";
-import { SectionCards } from "@/components/section-cards";
+"use client";
 
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import {
-  SidebarInset,
-  SidebarProvider,
-  SidebarTrigger,
-} from "@/components/ui/sidebar";
-import { DialogDemo } from "@/components/UploadDialog";
-import { getServerSession } from "next-auth";
-import { authOptions } from "../api/auth/[...nextauth]/route";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { isAuthenticated } from "@/lib/api/client";
 import DashboardContent from "./DashboardContent";
+
 export default function Page() {
-  const session = getServerSession(authOptions);
-  if (!session) {
-    return <>Unauthenticated</>;
-  }
-  const handleExportCSV = () => {
-    // Add CSV export logic here
-    console.log("Exporting as CSV...");
-  };
+	const router = useRouter();
+	const [isChecking, setIsChecking] = useState(true);
+	const [authenticated, setAuthenticated] = useState(false);
 
-  const handleExportJSON = () => {
-    // Add JSON export logic here
-    console.log("Exporting as JSON...");
-  };
+	useEffect(() => {
+		// Check authentication on client side only
+		const checkAuth = () => {
+			const isAuth = isAuthenticated();
+			setAuthenticated(isAuth);
+			setIsChecking(false);
 
-  return <DashboardContent />;
+			if (!isAuth) {
+				// Redirect to signin if not authenticated
+				router.push("/signin");
+			}
+		};
+
+		checkAuth();
+	}, [router]);
+
+	// Show loading state while checking authentication
+	// This prevents hydration mismatch by always rendering the same initial state
+	if (isChecking) {
+		return (
+			<div className="flex items-center justify-center min-h-screen">
+				<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+			</div>
+		);
+	}
+
+	// Don't render dashboard if not authenticated (will redirect)
+	if (!authenticated) {
+		return (
+			<div className="flex items-center justify-center min-h-screen">
+				<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+			</div>
+		);
+	}
+
+	return <DashboardContent />;
 }

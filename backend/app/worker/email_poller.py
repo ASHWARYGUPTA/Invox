@@ -48,36 +48,76 @@ POLLING_INTERVAL = 30  # Check every 30 seconds
 def get_gmail_service():
     """Authenticates with the Gmail API and returns a service object."""
     creds = None
-    if os.path.exists(TOKEN_FILE):
-        creds = Credentials.from_authorized_user_file(TOKEN_FILE, SCOPES)
     
+    # Try to load existing token
+    if os.path.exists(TOKEN_FILE):
+        try:
+            creds = Credentials.from_authorized_user_file(TOKEN_FILE, SCOPES)
+        except ValueError as e:
+            print(f"❌ Error loading token file: {e}")
+            print("--- Token file is corrupted or invalid. Deleting and re-authenticating... ---")
+            os.remove(TOKEN_FILE)
+            creds = None
+    
+    # Check if credentials are valid
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
+            # Try to refresh expired credentials
             try:
+                print("--- Refreshing expired credentials... ---")
                 creds.refresh(Request())
+                print("--- ✅ Credentials refreshed successfully ---")
             except Exception as e:
                 print(f"❌ Token refresh failed: {e}")
                 print("--- Deleting old token and re-authenticating... ---")
-                os.remove(TOKEN_FILE)
+                if os.path.exists(TOKEN_FILE):
+                    os.remove(TOKEN_FILE)
                 return get_gmail_service()  # Retry authentication
         else:
+            # No valid credentials - need to authenticate
+            if not os.path.exists(CREDENTIALS_FILE):
+                raise FileNotFoundError(
+                    f"Credentials file not found at {CREDENTIALS_FILE}\n"
+                    "Please download your OAuth 2.0 credentials from Google Cloud Console."
+                )
+            
             print("--- ❗️ First-time setup required for email poller ---")
             print("--- A browser window will open to authorize this script. ---")
-            print("--- IMPORTANT: Use port 8080 for authorization ---")
+            print("--- IMPORTANT: Make sure to approve all requested permissions ---")
             
-            flow = InstalledAppFlow.from_client_secrets_file(CREDENTIALS_FILE, SCOPES)
-            # Use a fixed port (8080) that matches your credentials.json redirect URIs
-            creds = flow.run_local_server(port=8080)
+            try:
+                flow = InstalledAppFlow.from_client_secrets_file(CREDENTIALS_FILE, SCOPES)
+                # Use a fixed port (8080) that matches your credentials.json redirect URIs
+                # Enable offline access to get refresh token
+                creds = flow.run_local_server(
+                    port=8080,
+                    access_type='offline',
+                    prompt='consent'
+                )
+                print("--- ✅ Authorization successful ---")
+            except Exception as e:
+                print(f"❌ Authentication failed: {e}")
+                print("\n⚠️  If you're getting errors, make sure:")
+                print("   1. Your credentials.json is valid")
+                print("   2. Port 8080 is not in use")
+                print("   3. http://localhost:8080/ is in your OAuth redirect URIs")
+                raise
         
-        with open(TOKEN_FILE, 'w') as token:
-            token.write(creds.to_json())
+        # Save the credentials for future use
+        try:
+            with open(TOKEN_FILE, 'w') as token:
+                token.write(creds.to_json())
+            print(f"--- ✅ Credentials saved to {TOKEN_FILE} ---")
+        except Exception as e:
+            print(f"⚠️  Warning: Could not save token file: {e}")
 
+    # Build and return the Gmail service
     try:
         service = build('gmail', 'v1', credentials=creds)
         print("--- ✅ Gmail API Service Connected (Worker) ---")
         return service
     except HttpError as error:
-        print(f"An error occurred building the service: {error}")
+        print(f"❌ An error occurred building the service: {error}")
         return None
 
 def process_attachment(db, service, user_id, msg_id, att_id, filename):
