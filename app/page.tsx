@@ -21,7 +21,7 @@ export default function Home() {
       <NavbarMenu />
       {/* Hero Section with Prism */}
       <section className="h-screen w-screen flex items-center justify-center relative overflow-hidden">
-        {/* <Prism
+        <Prism
           animationType="hover"
           timeScale={2}
           height={3.5}
@@ -31,7 +31,7 @@ export default function Home() {
           colorFrequency={1}
           noise={0.2}
           glow={0.5}
-        /> */}
+        />
 
         {/* Hero Content */}
         <HeroSection />
