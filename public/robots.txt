@@ -1,0 +1,14 @@
+User-agent: *
+Allow: /
+
+# Disallow authentication pages from being indexed
+Disallow: /auth/
+Disallow: /signin
+Disallow: /signup
+Disallow: /api/
+
+# Disallow private dashboard
+Disallow: /dashboard
+
+# Sitemap
+Sitemap: http://localhost:3000/sitemap.xml

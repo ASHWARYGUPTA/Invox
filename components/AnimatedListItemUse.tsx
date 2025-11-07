@@ -74,8 +74,6 @@ export default function AnimatedListItemUse() {
 				alert(
 					`✅ ${result.invoices_count} new invoice(s) found and added!`
 				);
-			} else {
-				alert("📧 No new invoices found in emails.");
 			}
 		} catch (error) {
 			console.error("Error polling emails:", error);
@@ -155,31 +153,58 @@ export default function AnimatedListItemUse() {
 	}
 
 	// Transform backend data to match the AnimatedList component format
-	const transformedItems = items.map((item) => ({
-		invoiceNumber: item.invoice_id || "N/A",
-		invoiceDate: item.invoice_date || "N/A",
-		dueDate: item.due_date || "N/A",
-		amountPayable: item.amount_due?.toString() || "N/A",
-		currency: item.currency_code || "USD",
-		vendorName: item.vendor_name || "N/A",
-		customerName: "N/A", // Backend doesn't have customer name
-		ConfidenceScore: item.confidence_score
-			? `${(item.confidence_score * 100).toFixed(0)}%`
-			: "N/A",
-		status: item.status,
-		actions: (
-			<Button
-				onClick={(e) => {
-					e.stopPropagation();
-					handleOpenDialog(item);
-				}}
-				variant={item.status === "approved" ? "secondary" : "default"}
-				size="sm"
-			>
-				{item.status === "approved" ? "View" : "Review"}
-			</Button>
-		),
-	}));
+	const transformedItems = items.map((item) => {
+		const isApproved = item.status === "approved";
+		// Flag for review if confidence score is less than 95% OR status is needs_review/pending
+		const confidenceThreshold = 0.95; // 95%
+		const lowConfidence =
+			item.confidence_score !== null &&
+			item.confidence_score < confidenceThreshold;
+		const needsReview =
+			item.status === "needs_review" ||
+			item.status === "pending" ||
+			lowConfidence;
+
+		return {
+			invoiceNumber: item.invoice_id || "N/A",
+			invoiceDate: item.invoice_date || "N/A",
+			dueDate: item.due_date || "N/A",
+			amountPayable: item.amount_due?.toString() || "N/A",
+			currency: item.currency_code || "USD",
+			vendorName: item.vendor_name || "N/A",
+			customerName: "N/A", // Backend doesn't have customer name
+			ConfidenceScore: item.confidence_score
+				? `${(item.confidence_score * 100).toFixed(0)}%`
+				: "N/A",
+			status:
+				lowConfidence && item.status !== "approved"
+					? "needs_review"
+					: item.status,
+			actions: (
+				<Button
+					onClick={(e) => {
+						e.stopPropagation();
+						handleOpenDialog(item);
+					}}
+					variant={
+						isApproved
+							? "secondary"
+							: needsReview
+							? "default"
+							: "default"
+					}
+					size="sm"
+					className={
+						needsReview
+							? "bg-orange-500 hover:bg-orange-600 text-white"
+							: ""
+					}
+				>
+					{isApproved ? "View" : "Review"}
+				</Button>
+			),
+		};
+	});
 
 	return (
 		<div className="w-full">

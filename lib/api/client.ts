@@ -95,6 +95,14 @@ export const authApi = {
 	},
 
 	/**
+	 * Get current user information
+	 */
+	getCurrentUser: async () => {
+		const response = await apiClient.get("/api/v1/auth/me");
+		return response.data;
+	},
+
+	/**
 	 * Logout user - clear local storage
 	 */
 	logout: (): void => {

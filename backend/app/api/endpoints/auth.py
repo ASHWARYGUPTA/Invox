@@ -89,3 +89,18 @@ async def auth_google_callback(code: str, db: Session = Depends(deps.get_db)):
     # We pass our JWT in the URL hash (fragment)
     frontend_redirect_url = f"http://localhost:3000/auth/callback#token={app_access_token}"
     return RedirectResponse(url=frontend_redirect_url)
+
+
+@router.get("/me")
+async def get_current_user_info(current_user = Depends(deps.get_current_user)):
+    """
+    Get the current authenticated user's information.
+    Returns user details including name, email, and profile picture.
+    """
+    return {
+        "id": current_user.id,
+        "email": current_user.email,
+        "name": current_user.full_name,
+        "picture": current_user.google_picture,
+        "is_active": current_user.is_active,
+    }

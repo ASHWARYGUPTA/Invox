@@ -2,36 +2,54 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { tokenManager } from "@/lib/api/client";
+import { tokenManager, authApi } from "@/lib/api/client";
 
 export default function AuthCallback() {
 	const router = useRouter();
 	const [error, setError] = useState<string | null>(null);
 
 	useEffect(() => {
-		// Extract token from URL hash (#token=xxx)
-		const hash = window.location.hash;
+		const handleAuth = async () => {
+			// Extract token from URL hash (#token=xxx)
+			const hash = window.location.hash;
 
-		if (hash) {
-			const params = new URLSearchParams(hash.substring(1));
-			const token = params.get("token");
+			if (hash) {
+				const params = new URLSearchParams(hash.substring(1));
+				const token = params.get("token");
 
-			if (token) {
-				// Store the token
-				tokenManager.setToken(token);
+				if (token) {
+					// Store the token
+					tokenManager.setToken(token);
 
-				// Redirect to dashboard
-				router.push("/dashboard");
+					try {
+						// Fetch user information
+						const userData = await authApi.getCurrentUser();
+
+						// Store user data
+						tokenManager.setUser(userData);
+
+						// Redirect to dashboard
+						router.push("/dashboard");
+					} catch (err) {
+						console.error("Error fetching user data:", err);
+						setTimeout(
+							() => setError("Failed to fetch user information"),
+							0
+						);
+					}
+				} else {
+					// Use setTimeout to avoid setState during render
+					setTimeout(
+						() => setError("No authentication token received"),
+						0
+					);
+				}
 			} else {
-				// Use setTimeout to avoid setState during render
-				setTimeout(
-					() => setError("No authentication token received"),
-					0
-				);
+				setTimeout(() => setError("Authentication failed"), 0);
 			}
-		} else {
-			setTimeout(() => setError("Authentication failed"), 0);
-		}
+		};
+
+		handleAuth();
 	}, [router]);
 
 	if (error) {

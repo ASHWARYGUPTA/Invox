@@ -1,38 +1,167 @@
-import { IconTrendingDown, IconTrendingUp } from "@tabler/icons-react";
+"use client";
+
+import { IconTrendingUp } from "@tabler/icons-react";
 import { Badge } from "@/components/ui/badge";
 import {
-  Card,
-  CardAction,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
+	Card,
+	CardAction,
+	CardDescription,
+	CardFooter,
+	CardHeader,
+	CardTitle,
 } from "@/components/ui/card";
+import { useEffect, useState } from "react";
+import { invoiceApi } from "@/lib/api/client";
+
+interface Invoice {
+	id: number;
+	status: string;
+	amount_due: number | null;
+	created_at: string;
+}
+
 export function SectionCards() {
-  return (
-    <div className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 px-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-4">
-      <Card className="@container/card">
-        <CardHeader>
-          <CardDescription>Total Revenue</CardDescription>
-          <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-            $1,250.00
-          </CardTitle>
-          <CardAction>
-            <Badge variant="outline">
-              <IconTrendingUp />
-              +12.5%
-            </Badge>
-          </CardAction>
-        </CardHeader>
-        <CardFooter className="flex-col items-start gap-1.5 text-sm">
-          <div className="line-clamp-1 flex gap-2 font-medium">
-            Trending up this month <IconTrendingUp className="size-4" />
-          </div>
-          <div className="text-muted-foreground">
-            Visitors for the last 6 months
-          </div>
-        </CardFooter>
-      </Card>
-    </div>
-  );
+	const [invoices, setInvoices] = useState<Invoice[]>([]);
+	const [loading, setLoading] = useState(true);
+
+	useEffect(() => {
+		const fetchInvoices = async () => {
+			try {
+				const data = await invoiceApi.getMyInvoices();
+				setInvoices(data);
+			} catch (error) {
+				console.error("Error fetching invoices:", error);
+			} finally {
+				setLoading(false);
+			}
+		};
+
+		fetchInvoices();
+	}, []);
+
+	// Calculate statistics
+	const totalInvoices = invoices.length;
+	const approvedInvoices = invoices.filter(
+		(inv) => inv.status === "approved"
+	).length;
+	const pendingInvoices = invoices.filter(
+		(inv) => inv.status === "needs_review" || inv.status === "pending"
+	).length;
+
+	if (loading) {
+		return (
+			<>
+				<SkeletonCard />
+				<SkeletonCard />
+				<SkeletonCard />
+			</>
+		);
+	}
+
+	return (
+		<>
+			{/* Total Invoices Card */}
+			<Card className="@container/card bg-gradient-to-br from-primary/5 to-card shadow-sm">
+				<CardHeader>
+					<CardDescription>Total Invoices</CardDescription>
+					<CardTitle className="text-3xl font-semibold tabular-nums">
+						{totalInvoices}
+					</CardTitle>
+					<CardAction>
+						<Badge variant="outline" className="bg-background/50">
+							<IconTrendingUp className="w-3 h-3" />
+							All time
+						</Badge>
+					</CardAction>
+				</CardHeader>
+				<CardFooter className="flex-col items-start gap-1.5 text-sm">
+					<div className="line-clamp-1 flex gap-2 font-medium">
+						Total invoices processed
+					</div>
+					<div className="text-muted-foreground">
+						Invoices in your system
+					</div>
+				</CardFooter>
+			</Card>
+
+			{/* Approved Invoices Card */}
+			<Card className="@container/card bg-gradient-to-br from-green-500/10 via-green-500/5 to-card shadow-sm border-green-500/20">
+				<CardHeader>
+					<CardDescription>Approved Invoices</CardDescription>
+					<CardTitle className="text-3xl font-semibold tabular-nums text-green-700 dark:text-green-400">
+						{approvedInvoices}
+					</CardTitle>
+					<CardAction>
+						<Badge
+							variant="outline"
+							className="bg-green-500/10 border-green-500/30 text-green-700 dark:text-green-400"
+						>
+							<IconTrendingUp className="w-3 h-3" />
+							{totalInvoices > 0
+								? Math.round(
+										(approvedInvoices / totalInvoices) * 100
+								  )
+								: 0}
+							%
+						</Badge>
+					</CardAction>
+				</CardHeader>
+				<CardFooter className="flex-col items-start gap-1.5 text-sm">
+					<div className="line-clamp-1 flex gap-2 font-medium text-green-700 dark:text-green-400">
+						Ready for payment
+					</div>
+					<div className="text-muted-foreground">
+						Verified and approved
+					</div>
+				</CardFooter>
+			</Card>
+
+			{/* Pending Review Card */}
+			<Card className="@container/card bg-gradient-to-br from-orange-500/10 via-yellow-500/5 to-card shadow-sm border-orange-500/20">
+				<CardHeader>
+					<CardDescription>Needs Review</CardDescription>
+					<CardTitle className="text-3xl font-semibold tabular-nums text-orange-700 dark:text-orange-400">
+						{pendingInvoices}
+					</CardTitle>
+					<CardAction>
+						<Badge
+							variant="outline"
+							className="bg-orange-500/10 border-orange-500/30 text-orange-700 dark:text-orange-400"
+						>
+							<IconTrendingUp className="w-3 h-3" />
+							{totalInvoices > 0
+								? Math.round(
+										(pendingInvoices / totalInvoices) * 100
+								  )
+								: 0}
+							%
+						</Badge>
+					</CardAction>
+				</CardHeader>
+				<CardFooter className="flex-col items-start gap-1.5 text-sm">
+					<div className="line-clamp-1 flex gap-2 font-medium text-orange-700 dark:text-orange-400">
+						Requires attention
+					</div>
+					<div className="text-muted-foreground">
+						Pending verification
+					</div>
+				</CardFooter>
+			</Card>
+		</>
+	);
+}
+
+function SkeletonCard() {
+	return (
+		<Card className="@container/card">
+			<CardHeader>
+				<div className="h-4 w-24 bg-muted rounded animate-pulse mb-2"></div>
+				<div className="h-8 w-16 bg-muted rounded animate-pulse"></div>
+			</CardHeader>
+			<CardFooter className="flex-col items-start gap-1.5">
+				<div className="h-4 w-32 bg-muted rounded animate-pulse"></div>
+				<div className="h-3 w-40 bg-muted rounded animate-pulse"></div>
+			</CardFooter>
+		</Card>
+	);
 }

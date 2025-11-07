@@ -1,19 +1,26 @@
-import * as React from "react";
+"use client";
 
-export function useIsMobile(mobileBreakpoint = 768) {
-  const [isMobile, setIsMobile] = React.useState<boolean | undefined>(
-    undefined
-  );
+import { useEffect, useState } from "react";
 
-  React.useEffect(() => {
-    const mql = window.matchMedia(`(max-width: ${mobileBreakpoint - 1}px)`);
-    const onChange = () => {
-      setIsMobile(window.innerWidth < mobileBreakpoint);
-    };
-    mql.addEventListener("change", onChange);
-    setIsMobile(window.innerWidth < mobileBreakpoint);
-    return () => mql.removeEventListener("change", onChange);
-  }, [mobileBreakpoint]);
+const MOBILE_BREAKPOINT = 768;
 
-  return !!isMobile;
+export function useIsMobile() {
+	const [isMobile, setIsMobile] = useState<boolean>(false);
+
+	useEffect(() => {
+		const checkMobile = () => {
+			setIsMobile(window.innerWidth < MOBILE_BREAKPOINT);
+		};
+
+		// Check on mount
+		checkMobile();
+
+		// Add event listener
+		window.addEventListener("resize", checkMobile);
+
+		// Cleanup
+		return () => window.removeEventListener("resize", checkMobile);
+	}, []);
+
+	return isMobile;
 }
