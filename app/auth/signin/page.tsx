@@ -10,7 +10,7 @@ import { useEffect } from "react";
 
 export default function SignIn() {
   const router = useRouter();
-  const { data: session, status } = useSession();
+  const { status } = useSession();
 
   // Redirect to dashboard if already authenticated
   useEffect(() => {

@@ -12,8 +12,8 @@ import {
 } from "@/components/ui/card";
 import { useEffect, useState } from "react";
 import { invoiceApi } from "@/lib/api/client";
-import { INVOICE_CONFIDENCE_THRESHOLD } from "@/lib/config";
 import { EmailStatusCard } from "./EmailStatusCard";
+import { eventBus, EVENTS } from "@/lib/events";
 
 interface Invoice {
   id: number;
@@ -45,40 +45,32 @@ export function SectionCards() {
     };
 
     fetchInvoices();
+
+    // Listen for invoice updates and refresh
+    const unsubscribe = eventBus.on(EVENTS.INVOICE_UPDATED, () => {
+      console.log("📊 SectionCards: Refreshing due to invoice update");
+      fetchInvoices();
+    });
+
+    // Cleanup listener on unmount
+    return unsubscribe;
   }, []);
 
-  // Calculate statistics with confidence score consideration
+  // Calculate statistics based on database status only (no confidence filtering)
   const totalInvoices = invoices.length;
 
-  // "completed" with good confidence (≥87%) means ready for payment
+  // "completed" status means ready for payment (approved)
   const approvedInvoices = invoices.filter((inv) => {
-    const isCompleted = inv.status === "completed";
-    const hasGoodConfidence =
-      inv.confidence_score === null ||
-      inv.confidence_score >= INVOICE_CONFIDENCE_THRESHOLD;
-    return isCompleted && hasGoodConfidence;
+    return inv.status === "completed";
   }).length;
 
-  // "pending", "processing", "failed", OR low confidence (<87%) means needs review
+  // "pending", "processing", or "failed" means needs review
   const pendingInvoices = invoices.filter((inv) => {
-    const isPending = inv.status === "pending" || inv.status === "processing";
-    const isFailed = inv.status === "failed";
-    const hasLowConfidence =
-      inv.confidence_score !== null &&
-      inv.confidence_score < INVOICE_CONFIDENCE_THRESHOLD;
-
-    // Debug logging for low confidence invoices
-    if (hasLowConfidence) {
-      console.log(`📊 Low confidence invoice detected:`, {
-        id: inv.id,
-        status: inv.status,
-        confidence: `${(inv.confidence_score! * 100).toFixed(1)}%`,
-        threshold: `${(INVOICE_CONFIDENCE_THRESHOLD * 100).toFixed(0)}%`,
-        needsReview: true,
-      });
-    }
-
-    return isPending || isFailed || hasLowConfidence;
+    return (
+      inv.status === "pending" ||
+      inv.status === "processing" ||
+      inv.status === "failed"
+    );
   }).length;
 
   if (loading) {

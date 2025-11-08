@@ -8,7 +8,8 @@ import { X, Upload } from "lucide-react";
 
 export default function HeroSection() {
   const router = useRouter();
-  const { status } = useSession();
+  const session = useSession();
+  const status = session?.status || "loading";
   const [uploadOpen, setUploadOpen] = useState(false);
   const [files, setFiles] = useState<File[]>([]);
   const dialogRef = useRef<HTMLDivElement>(null);
