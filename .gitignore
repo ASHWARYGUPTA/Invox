@@ -2,6 +2,7 @@
 # Next.js / Node.js / Frontend
 # ==========================================
 
+**/*.md
 # Dependencies
 /node_modules
 /.pnp
