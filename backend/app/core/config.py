@@ -33,7 +33,7 @@ class Settings(BaseSettings):
     ENCRYPTION_KEY: Optional[str] = None
     
     # CORS - Frontend URLs (comma-separated in .env file)
-    FRONTEND_URLS: str = "http://localhost:3000,http://127.0.0.1:3000"
+    FRONTEND_URLS: str = "http://localhost:3000,http://127.0.0.1:3000,https://invox-sandy.vercel.app"
     
     class Config:
         env_file = ".env"
