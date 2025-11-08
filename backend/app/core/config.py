@@ -24,7 +24,7 @@ class Settings(BaseSettings):
     # Gmail OAuth (for email polling - can be same as above or separate)
     GMAIL_CLIENT_ID: Optional[str] = None
     GMAIL_CLIENT_SECRET: Optional[str] = None
-    GMAIL_REDIRECT_URI: str = "http://localhost:3000/auth/gmail/callback"
+    GMAIL_REDIRECT_URI: str = "http://localhost:3000/auth/gmail/callback"  # Override in production
     
     # Google Gemini AI (for invoice processing)
     GOOGLE_API_KEY: Optional[str] = None
@@ -32,8 +32,8 @@ class Settings(BaseSettings):
     # Encryption (for email credentials)
     ENCRYPTION_KEY: Optional[str] = None
     
-    # CORS
-    BACKEND_CORS_ORIGINS: list[str] = ["http://localhost:3000", "http://127.0.0.1:3000"]
+    # CORS - Frontend URLs (comma-separated in .env file)
+    FRONTEND_URLS: str = "http://localhost:3000,http://127.0.0.1:3000"
     
     class Config:
         env_file = ".env"
@@ -41,3 +41,6 @@ class Settings(BaseSettings):
 
 
 settings = Settings()  # type: ignore  # Reads from .env file
+
+# Parse CORS origins from comma-separated FRONTEND_URLS
+BACKEND_CORS_ORIGINS = [url.strip() for url in settings.FRONTEND_URLS.split(",") if url.strip()]
