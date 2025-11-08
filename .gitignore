@@ -1,41 +1,273 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# ==========================================
+# Next.js / Node.js / Frontend
+# ==========================================
 
-# dependencies
+# Dependencies
 /node_modules
 /.pnp
 .pnp.*
+.pnp.js
+
+# Yarn
 .yarn/*
 !.yarn/patches
 !.yarn/plugins
 !.yarn/releases
 !.yarn/versions
+.yarn/install-state.gz
 
-# testing
+# pnpm
+.pnpm-store
+.pnpm-debug.log*
+
+# Testing
 /coverage
+.nyc_output
+*.lcov
 
-# next.js
+# Next.js Build Output
 /.next/
 /out/
+.next
 
-# production
+# Production Build
 /build
+/dist
 
-# misc
-.DS_Store
-*.pem
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+.tsbuildinfo
 
-# debug
+# Turbopack
+.turbo
+
+# Vercel
+.vercel
+
+# Environment Variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env*.local
+
+# Debug Logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-.pnpm-debug.log*
+lerna-debug.log*
+pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
-.env*
+# ==========================================
+# Python / Backend (FastAPI)
+# ==========================================
 
-# vercel
-.vercel
+# Virtual Environments
+backend/venv/
+backend/.venv/
+backend/env/
+backend/ENV/
+backend2/venv/
+backend2/.venv/
+backend2/env/
+backend2/ENV/
+venv/
+.venv/
+env/
+ENV/
+.Python
 
-# typescript
-*.tsbuildinfo
-next-env.d.ts
+# Python Compiled Files
+*.py[cod]
+*$py.class
+__pycache__/
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+*.whl
+.eggs/
+.pytest_cache/
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Python Environment Files
+backend/.env
+backend/.env.local
+backend/.env.*.local
+backend2/.env
+backend2/.env.local
+backend2/.env.*.local
+!backend/.env.example
+!backend2/.env.example
+
+# Python Database
+*.db
+*.sqlite
+*.sqlite3
+instance/
+
+# Alembic
+backend/alembic/versions/*.pyc
+backend2/alembic/versions/*.pyc
+
+# Python Coverage
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+coverage.xml
+*.cover
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb
+
+# Python Profiling
+*.prof
+*.lprof
+
+# FastAPI / Uvicorn
+*.log
+logs/
+*.pid
+
+# ==========================================
+# IDE / Editor
+# ==========================================
+
+# VSCode
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+!.vscode/*.code-snippets
+.history/
+*.vsix
+
+# JetBrains IDEs
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+*.swp
+*.swo
+*~
+.netrwhist
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+
+# ==========================================
+# Operating System Files
+# ==========================================
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# Linux
+.directory
+.Trash-*
+.nfs*
+
+# ==========================================
+# Security & Credentials
+# ==========================================
+
+# SSL Certificates
+*.pem
+*.key
+*.crt
+*.cer
+*.p12
+*.pfx
+
+# SSH Keys
+id_rsa
+id_dsa
+*.pub
+
+# API Keys & Secrets
+secrets.json
+credentials.json
+service-account*.json
+firebase-adminsdk*.json
+
+# ==========================================
+# Temporary & Cache Files
+# ==========================================
+
+# General
+*.tmp
+*.temp
+*.cache
+*.bak
+*.swp
+*.swo
+
+# Thumbnails
+*.thumb
+
+# Lock files (keep package manager lock files)
+# package-lock.json (keep for npm)
+# pnpm-lock.yaml (keep for pnpm)
+# yarn.lock (keep for yarn)
+
+# ==========================================
+# Project Specific
+# ==========================================
+
+# Upload directories (if storing uploaded files locally)
+/uploads/
+/tmp/
+/temp/
+
+# Generated documentation
+/docs/_build/
+/site/
+
+# Test artifacts
+test-results/
+playwright-report/
+playwright/.cache/

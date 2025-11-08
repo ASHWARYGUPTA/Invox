@@ -1,31 +1,43 @@
-# /backend/app/core/config.py
-import os
 from pydantic_settings import BaseSettings
-from dotenv import load_dotenv
+from typing import Optional
 
-load_dotenv(dotenv_path=os.path.join(os.path.dirname(os.path.dirname(__file__)), '..', '.env'))
 
 class Settings(BaseSettings):
-    # App
-    PROJECT_NAME: str = "Invoice AI"
-
     # Database
-    # Format: "postgresql://USER:PASSWORD@HOST/DB_NAME"
-    DATABASE_URL: str = os.getenv("DATABASE_URL", "postgresql://postgres:your_password@localhost/invoice_db")
-
-    # Google
-    GOOGLE_API_KEY: str = os.getenv("GOOGLE_API_KEY", "")
+    DATABASE_URL: str
     
-    # NEW Google OAuth "Web App" Credentials (we will get these later)
-    GOOGLE_CLIENT_ID: str = os.getenv("GOOGLE_CLIENT_ID", "")
-    GOOGLE_CLIENT_SECRET: str = os.getenv("GOOGLE_CLIENT_SECRET", "")
-
+    # API
+    API_V1_PREFIX: str = "/api/v1"
+    PROJECT_NAME: str = "Invox Backend"
+    
     # Security
-    SECRET_KEY: str = os.getenv("SECRET_KEY", "a_very_secret_key_change_this")
-    ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 # One day
+    SECRET_KEY: str  # JWT secret key for authentication
+    
+    # NextAuth
+    NEXTAUTH_URL: str
+    NEXTAUTH_SECRET: str
+    
+    # Google OAuth (for NextAuth)
+    GOOGLE_CLIENT_ID: str
+    GOOGLE_CLIENT_SECRET: str
+    
+    # Gmail OAuth (for email polling - can be same as above or separate)
+    GMAIL_CLIENT_ID: Optional[str] = None
+    GMAIL_CLIENT_SECRET: Optional[str] = None
+    GMAIL_REDIRECT_URI: str = "http://localhost:3000/auth/gmail/callback"
+    
+    # Google Gemini AI (for invoice processing)
+    GOOGLE_API_KEY: Optional[str] = None
+    
+    # Encryption (for email credentials)
+    ENCRYPTION_KEY: Optional[str] = None
+    
+    # CORS
+    BACKEND_CORS_ORIGINS: list[str] = ["http://localhost:3000", "http://127.0.0.1:3000"]
     
     class Config:
+        env_file = ".env"
         case_sensitive = True
 
-settings = Settings()
+
+settings = Settings()  # type: ignore  # Reads from .env file

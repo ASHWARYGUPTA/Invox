@@ -1,34 +1,68 @@
-# /backend/app/main.py
-from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI
-from app.core.config import settings
-from app.api.endpoints import auth
-from app.api.endpoints import invoices  # 1. Import
+from fastapi.middleware.cors import CORSMiddleware
+from contextlib import asynccontextmanager
+import asyncio
 
-# ...
+from app.core.config import settings
+from app.api.v1.api import api_router
+from app.db.session import engine
+from app.db.base import Base
+from app.workers import start_background_polling, stop_background_polling
+
+# Create tables
+Base.metadata.create_all(bind=engine)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    FastAPI lifespan event handler
+    Background email polling is NOT started automatically on startup.
+    Users must manually trigger polling via the /email-config/poll-now endpoint
+    or enable automatic polling per user via email configuration settings.
+    """
+    # Startup: No automatic polling
+    # polling_task = asyncio.create_task(start_background_polling())
+    
+    yield
+    
+    # Shutdown: Stop any running polling workers
+    stop_background_polling()
+    # polling_task.cancel()
+    # try:
+    #     await polling_task
+    # except asyncio.CancelledError:
+    #     pass
+
+
 app = FastAPI(
     title=settings.PROJECT_NAME,
-    openapi_url="/api/v1/openapi.json"
+    openapi_url=f"{settings.API_V1_PREFIX}/openapi.json",
+    lifespan=lifespan
 )
 
-# CORS Configuration - Allow frontend to access backend
+# Set up CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",  # Your React frontend
-        "http://localhost:3001",  # Your friend's Next.js (if different port)
-        "http://127.0.0.1:3000",
-        "*"  # Allow all origins (for development with ngrok)
-    ],
+    allow_origins=settings.BACKEND_CORS_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],  # Allows all methods (GET, POST, etc.)
-    allow_headers=["*"],  # Allows all headers (like Authorization)
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
-# 2. Add routers
-app.include_router(auth.router, prefix="/api/v1/auth", tags=["auth"])
-app.include_router(invoices.router, prefix="/api/v1/invoices", tags=["invoices"]) # 3. Add this line
+# Include API router
+app.include_router(api_router, prefix=settings.API_V1_PREFIX)
+
 
 @app.get("/")
-def read_root():
-    return {"status": f"Welcome to {settings.PROJECT_NAME}"}
+async def root():
+    return {
+        "message": "Welcome to Invox Backend API",
+        "docs": "/docs",
+        "version": "1.0.0"
+    }
+
+
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy"}

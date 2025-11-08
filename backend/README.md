@@ -1,273 +1,233 @@
-# Invoice Backend
+# Invox Backend 2 - FastAPI with OAuth
 
-FastAPI backend for the Invoice Management System with Gmail integration.
+A production-ready FastAPI backend with NextAuth-compatible OAuth authentication and PostgreSQL database, designed to work seamlessly with the Next.js frontend.
 
-## Quick Start
+## 🌟 Features
+
+- 🔐 **OAuth Authentication** - Google OAuth with NextAuth integration
+- 🗄️ **PostgreSQL Database** - Robust data storage with SQLAlchemy ORM
+- 🔑 **JWT Tokens** - Secure token-based authentication
+- 📝 **Database Migrations** - Version-controlled schema changes with Alembic
+- 🎯 **RESTful API** - Clean, intuitive API design
+- 📚 **Auto Documentation** - Interactive API docs with Swagger UI
+- 🔒 **Security First** - Password hashing, CORS protection, token verification
+- 🚀 **Production Ready** - Proper error handling, logging, and configuration
+
+## 📋 Quick Links
+
+| Document                                               | Description                        |
+| ------------------------------------------------------ | ---------------------------------- |
+| [SETUP_CHECKLIST.md](SETUP_CHECKLIST.md)               | ✅ Step-by-step setup checklist    |
+| [SETUP_GUIDE.md](SETUP_GUIDE.md)                       | 📖 Detailed setup instructions     |
+| [ARCHITECTURE.md](ARCHITECTURE.md)                     | 🏗️ System architecture & diagrams  |
+| [IMPLEMENTATION_SUMMARY.md](IMPLEMENTATION_SUMMARY.md) | 📊 Complete implementation details |
+| [QUICK_REFERENCE.md](QUICK_REFERENCE.md)               | ⚡ Common commands & tips          |
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+- Python 3.9+
+- PostgreSQL 12+
+- Google OAuth credentials
+
+### 1. Database Setup
+
+```bash
+createdb invox_db
+createuser invox_user -P
+```
+
+### 2. Backend Configuration
+
+```bash
+cd backend2
+cp .env.example .env
+# Edit .env with your credentials
+```
+
+### 3. Install & Run
+
+```bash
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+alembic upgrade head
+uvicorn app.main:app --reload --port 8001
+```
+
+Visit http://localhost:8001/docs for API documentation!
+
+## 📁 Project Structure
+
+```
+backend2/
+├── app/
+│   ├── api/
+│   │   ├── deps.py              # Dependencies (auth, db)
+│   │   └── v1/
+│   │       ├── api.py           # API router
+│   │       └── endpoints/
+│   │           ├── auth.py      # OAuth endpoints
+│   │           └── users.py     # User endpoints
+│   ├── core/
+│   │   ├── config.py            # Configuration
+│   │   └── security.py          # JWT & password utilities
+│   ├── db/
+│   │   ├── base.py              # Base model
+│   │   └── session.py           # Database session
+│   ├── models/
+│   │   └── user.py              # User, Account, Session models
+│   ├── schemas/
+│   │   └── user.py              # Pydantic schemas
+│   ├── services/
+│   │   └── auth.py              # Authentication service
+│   └── main.py                  # FastAPI application
+├── alembic/                     # Database migrations
+├── .env                         # Environment variables
+├── requirements.txt             # Python dependencies
+└── README.md
+```
+
+## Setup
 
 ### 1. Install Dependencies
 
-```powershell
-cd backend
-.\venv\Scripts\Activate.ps1
+```bash
+cd backend2
 pip install -r requirements.txt
 ```
 
-### 2. Set Up Gmail API (Required for Email Polling)
+### 2. Configure Environment Variables
 
-Run the authentication script to set up Gmail API:
+Copy `.env.example` to `.env` and fill in your values:
 
-```powershell
-python app\worker\authenticate_gmail.py
+```bash
+cp .env.example .env
 ```
 
-This will:
+Edit `.env`:
 
--   Open a browser for OAuth authorization
--   Create `token.json` with proper credentials
--   Test the Gmail connection
-
-**Note:** If you skip this step, the "Check Email" button won't work, but other features will function normally.
-
-For detailed setup instructions, see: [`app/worker/GMAIL_SETUP.md`](app/worker/GMAIL_SETUP.md)
-
-### 3. Start the Backend Server
-
-```powershell
-# Option 1: Use the helper script
-.\start_backend.ps1
-
-# Option 2: Manual start
-.\venv\Scripts\Activate.ps1
-uvicorn app.main:app --reload
+```env
+DATABASE_URL=postgresql://username:password@localhost:5432/invox_db
+NEXTAUTH_SECRET=your-secret-key-here
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
 ```
 
-The server will start on: `http://localhost:8000`
+### 3. Create Database
 
-API Documentation: `http://localhost:8000/docs`
-
-## Features
-
-### ✅ Invoice Management
-
--   Upload and process invoice files (PDF, PNG, JPG)
--   Extract invoice data using AI (Google Gemini)
--   CRUD operations for invoices
--   Export invoices (CSV, JSON)
--   Status management (Pending, Approved, Rejected)
-
-### ✅ Email Integration
-
--   Automatic email polling for new invoices
--   Manual email checking via frontend button
--   Processes invoice attachments automatically
--   Marks processed emails as read
-
-### ✅ Authentication
-
--   User registration and login
--   JWT-based authentication
--   Protected API endpoints
-
-## Project Structure
-
+```bash
+# Create PostgreSQL database
+createdb invox_db
 ```
-backend/
-├── app/
-│   ├── api/
-│   │   ├── endpoints/
-│   │   │   ├── auth.py          # Authentication endpoints
-│   │   │   └── invoices.py      # Invoice CRUD & email polling
-│   │   └── deps.py              # Dependencies (auth, db)
-│   ├── core/
-│   │   ├── config.py            # Configuration settings
-│   │   └── security.py          # Password hashing, JWT
-│   ├── crud/
-│   │   ├── invoice.py           # Invoice database operations
-│   │   └── user.py              # User database operations
-│   ├── db/
-│   │   ├── base.py              # Database base
-│   │   └── session.py           # Database session
-│   ├── models/
-│   │   ├── invoice.py           # Invoice model
-│   │   └── user.py              # User model
-│   ├── schemas/
-│   │   ├── invoice.py           # Invoice Pydantic schemas
-│   │   └── user.py              # User Pydantic schemas
-│   ├── services/
-│   │   ├── canonicalization.py # Data normalization
-│   │   └── processing_service.py # AI invoice processing
-│   ├── worker/
-│   │   ├── email_poller.py      # Email polling worker
-│   │   ├── authenticate_gmail.py # Gmail setup script
-│   │   ├── test_gmail_connection.py # Test script
-│   │   └── GMAIL_SETUP.md       # Setup documentation
-│   └── main.py                  # FastAPI app entry point
-├── alembic/                     # Database migrations
-├── requirements.txt             # Python dependencies
-└── start_backend.ps1            # Quick start script
+
+### 4. Run Migrations
+
+```bash
+# Initialize Alembic (if not already done)
+alembic init alembic
+
+# Create initial migration
+alembic revision --autogenerate -m "Initial migration"
+
+# Apply migrations
+alembic upgrade head
 ```
+
+### 5. Run the Server
+
+```bash
+uvicorn app.main:app --reload --port 8001
+```
+
+The API will be available at:
+
+- API: http://localhost:8001
+- Documentation: http://localhost:8001/docs
+- Alternative docs: http://localhost:8001/redoc
 
 ## API Endpoints
 
 ### Authentication
 
--   `POST /api/v1/auth/register` - Register new user
--   `POST /api/v1/auth/login` - Login user
--   `GET /api/v1/auth/me` - Get current user
+- `POST /api/v1/auth/oauth/callback` - Handle OAuth callback from NextAuth
+- `POST /api/v1/auth/verify-email` - Check if email exists
+- `GET /api/v1/auth/me` - Get current user info (requires auth)
 
-### Invoices
+### Users
 
--   `GET /api/v1/invoices/` - List all invoices
--   `GET /api/v1/invoices/{id}` - Get invoice by ID
--   `POST /api/v1/invoices/upload` - Upload and process invoice file
--   `PUT /api/v1/invoices/{id}` - Update invoice
--   `DELETE /api/v1/invoices/{id}` - Delete invoice
--   `POST /api/v1/invoices/poll-emails` - Check emails for new invoices
--   `GET /api/v1/invoices/export` - Export invoices (CSV/JSON)
+- `GET /api/v1/users/me` - Get current user profile (requires auth)
+- `PUT /api/v1/users/me` - Update current user profile (requires auth)
+- `GET /api/v1/users/{user_id}` - Get user by ID (requires auth)
 
-## Testing
+## Database Models
 
-### Test Gmail Connection
+### User
 
-```powershell
-python app\worker\test_gmail_connection.py
-```
+- Stores user profile information
+- Compatible with NextAuth User model
 
-### Test Email Polling
+### Account
 
-```powershell
-python app\worker\email_poller.py
-```
+- Stores OAuth provider information
+- Links users to their OAuth accounts
+- Compatible with NextAuth Account model
 
-### Run Background Email Poller
+### Session
 
-The email poller continuously monitors for new invoice emails:
+- Stores session information (when using database sessions)
+- Compatible with NextAuth Session model
 
-```powershell
-python app\worker\email_poller.py
-```
+### VerificationToken
 
-Configuration in `email_poller.py`:
+- For email verification tokens
+- Compatible with NextAuth VerificationToken model
 
-```python
-MAX_EMAILS_TO_CHECK = 5   # Check 5 most recent emails
-POLLING_INTERVAL = 30     # Check every 30 seconds
-DEFAULT_OWNER_ID = 1      # Assign to user ID 1
-```
+## Integration with NextAuth
 
-## Environment Variables
+The backend is designed to work seamlessly with NextAuth. Here's how to integrate:
 
-Create a `.env` file in the backend directory:
-
-```env
-# Database
-DATABASE_URL=postgresql://user:password@localhost/invoicedb
-
-# Security
-SECRET_KEY=your-secret-key-here
-ALGORITHM=HS256
-ACCESS_TOKEN_EXPIRE_MINUTES=30
-
-# Google AI
-GOOGLE_API_KEY=your-gemini-api-key
-
-# CORS
-FRONTEND_URL=http://localhost:3000
-```
-
-## Database Setup
-
-### Run Migrations
-
-```powershell
-alembic upgrade head
-```
-
-### Create Default User
-
-```powershell
-python create_default_user.py
-```
-
-## Troubleshooting
-
-### Gmail API Errors
-
-**Error: "missing fields refresh_token"**
-
-```powershell
-# Delete old token and re-authenticate
-Remove-Item app\worker\token.json
-python app\worker\authenticate_gmail.py
-```
-
-**Error: "Credentials file not found"**
-
--   Download OAuth 2.0 credentials from Google Cloud Console
--   Save as `app/worker/credentials.json`
-
-**Error: "redirect_uri_mismatch"**
-
--   Add `http://localhost:8080/` to authorized redirect URIs in Google Cloud Console
-
-### Database Errors
-
-**Error: "relation does not exist"**
-
-```powershell
-alembic upgrade head
-```
-
-**Error: "password authentication failed"**
-
--   Check DATABASE_URL in `.env` file
--   Verify PostgreSQL is running
-
-### Import Errors
-
-**Error: "ModuleNotFoundError"**
-
-```powershell
-# Make sure virtual environment is activated
-.\venv\Scripts\Activate.ps1
-
-# Reinstall dependencies
-pip install -r requirements.txt
-```
+1. **OAuth Flow**: When a user signs in with OAuth on the frontend, NextAuth handles the OAuth flow
+2. **Backend Callback**: After successful OAuth, call the `/api/v1/auth/oauth/callback` endpoint with the user data
+3. **JWT Token**: The backend returns a JWT token that can be used for subsequent API calls
+4. **Store Token**: Store this token in the NextAuth session for use with backend API calls
 
 ## Development
 
-### Add New Dependencies
-
-```powershell
-pip install package-name
-pip freeze > requirements.txt
-```
-
 ### Create New Migration
 
-```powershell
-alembic revision --autogenerate -m "description"
+```bash
+alembic revision --autogenerate -m "Description of changes"
 alembic upgrade head
 ```
 
-### Run with Auto-Reload
+### Rollback Migration
 
-```powershell
-uvicorn app.main:app --reload
+```bash
+alembic downgrade -1
 ```
 
-## Documentation
+### Check Current Migration
 
--   **Gmail Setup Guide:** [`app/worker/GMAIL_SETUP.md`](app/worker/GMAIL_SETUP.md)
--   **Gmail Fix Summary:** [`../GMAIL_FIX_SUMMARY.md`](../GMAIL_FIX_SUMMARY.md)
--   **API Documentation:** Visit `http://localhost:8000/docs` when server is running
+```bash
+alembic current
+```
 
-## Support
+## Testing
 
-For issues or questions:
+```bash
+pytest
+```
 
-1. Check the troubleshooting section above
-2. Review the Gmail setup guide
-3. Check server logs for detailed error messages
-4. Ensure all environment variables are set correctly
+## Security Notes
+
+- Always use HTTPS in production
+- Keep `NEXTAUTH_SECRET` secure and never commit it
+- Rotate OAuth credentials regularly
+- Use environment variables for sensitive data
+- Implement rate limiting for production
+
+## License
+
+MIT

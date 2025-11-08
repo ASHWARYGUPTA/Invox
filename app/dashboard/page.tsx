@@ -2,48 +2,58 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { isAuthenticated } from "@/lib/api/client";
-import DashboardContent from "./DashboardContent";
+import { useSession } from "next-auth/react";
+import { tokenManager } from "@/lib/api/client";
+import dynamic from "next/dynamic";
 
-export default function Page() {
-	const router = useRouter();
-	const [isChecking, setIsChecking] = useState(true);
-	const [authenticated, setAuthenticated] = useState(false);
+// Dynamically import the DashboardContent with ssr disabled
+const DashboardContent = dynamic(() => import("./DashboardContent"), {
+  ssr: false,
+});
 
-	useEffect(() => {
-		// Check authentication on client side only
-		const checkAuth = () => {
-			const isAuth = isAuthenticated();
-			setAuthenticated(isAuth);
-			setIsChecking(false);
+export default function DashboardPage() {
+  const router = useRouter();
+  const { data: session, status } = useSession();
+  const [isLoading, setIsLoading] = useState(true);
 
-			if (!isAuth) {
-				// Redirect to signin if not authenticated
-				router.push("/signin");
-			}
-		};
+  useEffect(() => {
+    if (status === "loading") {
+      // Still checking session
+      return;
+    }
 
-		checkAuth();
-	}, [router]);
+    if (status === "unauthenticated") {
+      // Not signed in, redirect to signin
+      router.push("/signin");
+      return;
+    }
 
-	// Show loading state while checking authentication
-	// This prevents hydration mismatch by always rendering the same initial state
-	if (isChecking) {
-		return (
-			<div className="flex items-center justify-center min-h-screen">
-				<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-			</div>
-		);
-	}
+    if (status === "authenticated" && session) {
+      // Store the backend token in localStorage for API calls
+      const backendToken = (session as any).backendToken;
+      if (backendToken) {
+        tokenManager.setToken(backendToken);
+        tokenManager.setUser({
+          id: (session as any).userId,
+          email: session.user?.email || "",
+          name: session.user?.name || "",
+          image: session.user?.image || "",
+        });
+      }
+      setIsLoading(false);
+    }
+  }, [session, status, router]);
 
-	// Don't render dashboard if not authenticated (will redirect)
-	if (!authenticated) {
-		return (
-			<div className="flex items-center justify-center min-h-screen">
-				<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-			</div>
-		);
-	}
+  if (status === "loading" || isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
 
-	return <DashboardContent />;
+  return <DashboardContent />;
 }
