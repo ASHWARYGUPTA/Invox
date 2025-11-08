@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { FileText, Save, CheckCircle } from "lucide-react";
 import { invoiceApi } from "@/lib/api/client";
+import { eventBus, EVENTS } from "@/lib/events";
 
 interface Invoice {
   id: number;
@@ -69,7 +70,7 @@ export function InvoiceEditDialog({
         invoice_date?: string;
         due_date?: string;
       } = {
-        status: "approved",
+        status: "completed",
       };
 
       // Only include changed fields
@@ -85,6 +86,9 @@ export function InvoiceEditDialog({
       if (dueDate !== invoice.due_date) updateData.due_date = dueDate;
 
       await invoiceApi.updateInvoice(invoice.id.toString(), updateData);
+
+      // Emit event to refresh all invoice lists
+      eventBus.emit(EVENTS.INVOICE_UPDATED);
 
       // Close dialog and refresh
       onOpenChange(false);
@@ -104,6 +108,10 @@ export function InvoiceEditDialog({
       await invoiceApi.updateInvoice(invoice.id.toString(), {
         status: "completed",
       });
+
+      // Emit event to refresh all invoice lists
+      eventBus.emit(EVENTS.INVOICE_UPDATED);
+
       onOpenChange(false);
       onSuccess();
     } catch (error) {

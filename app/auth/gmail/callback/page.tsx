@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Loader2, CheckCircle2, XCircle } from "lucide-react";
 
-export default function GmailCallbackPage() {
+function GmailCallbackContent() {
   const searchParams = useSearchParams();
   const [status, setStatus] = useState<"loading" | "success" | "error">(
     "loading"
@@ -164,5 +164,19 @@ export default function GmailCallbackPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function GmailCallbackPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center min-h-screen">
+          <Loader2 className="h-12 w-12 animate-spin text-blue-600" />
+        </div>
+      }
+    >
+      <GmailCallbackContent />
+    </Suspense>
   );
 }

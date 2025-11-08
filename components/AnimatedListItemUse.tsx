@@ -1,7 +1,6 @@
 "use client";
 import AnimatedList from "./AnimatedList";
 import { invoiceApi, emailConfigApi } from "@/lib/api/client";
-import { INVOICE_CONFIDENCE_THRESHOLD } from "@/lib/config";
 import { useEffect, useState, useRef, useCallback } from "react";
 import { Button } from "./ui/button";
 import { InvoiceEditDialog } from "./InvoiceEditDialog";
@@ -247,19 +246,11 @@ export default function AnimatedListItemUse() {
   // Transform backend data to match the AnimatedList component format
   const transformedItems = items.map((item) => {
     // Backend uses: "pending", "processing", "completed", "failed"
+    // Use database status directly - don't filter by confidence score
     const isCompleted = item.status === "completed";
     const isFailed = item.status === "failed";
-
-    // Flag for review if confidence score is less than threshold OR status is pending/processing
-    // Threshold is centralized in lib/config.ts (currently 87%)
-    const lowConfidence =
-      item.confidence_score !== null &&
-      item.confidence_score < INVOICE_CONFIDENCE_THRESHOLD;
     const needsReview =
-      item.status === "pending" ||
-      item.status === "processing" ||
-      lowConfidence ||
-      isFailed;
+      item.status === "pending" || item.status === "processing" || isFailed;
 
     return {
       invoiceNumber: item.invoice_id || "N/A",
@@ -272,11 +263,7 @@ export default function AnimatedListItemUse() {
       ConfidenceScore: item.confidence_score
         ? `${(item.confidence_score * 100).toFixed(0)}%`
         : "N/A",
-      status: isFailed
-        ? "failed"
-        : lowConfidence && item.status !== "completed"
-        ? "needs_review"
-        : item.status,
+      status: item.status, // Use actual database status
       actions: (
         <Button
           onClick={(e) => {

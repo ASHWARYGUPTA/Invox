@@ -26,7 +26,7 @@ export const authOptions: NextAuthOptions = {
     signIn: "/auth/signin",
   },
   callbacks: {
-    async signIn({ user, account, profile }) {
+    async signIn({ user, account }) {
       try {
         // Send OAuth data to FastAPI backend
         const response = await fetch(
@@ -75,7 +75,7 @@ export const authOptions: NextAuthOptions = {
         return false;
       }
     },
-    async jwt({ token, user, account }) {
+    async jwt({ token, user }) {
       // Initial sign in
       if (user) {
         token.backendToken = (user as any).backendToken;
