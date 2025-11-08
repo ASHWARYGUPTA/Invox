@@ -2,8 +2,6 @@
 
 <div align="center">
 
-![Invox Logo](public/window.svg)
-
 **Transform your invoice workflow with AI-powered automation**
 
 [![Next.js](https://img.shields.io/badge/Next.js-15-black?logo=next.js)](https://nextjs.org/)
