@@ -41,6 +41,6 @@ class Settings(BaseSettings):
 
 
 settings = Settings()  # type: ignore  # Reads from .env file
-
+print(settings.FRONTEND_URLS)
 # Parse CORS origins from comma-separated FRONTEND_URLS
 BACKEND_CORS_ORIGINS = [url.strip() for url in settings.FRONTEND_URLS.split(",") if url.strip()]
