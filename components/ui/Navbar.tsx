@@ -32,14 +32,17 @@ export default function Navbar() {
 
   return (
     <div>
-      <nav className="fixed top-6 left-1/2 -translate-x-1/2 w-[90%] max-w-5xl z-50">
-        <div className="flex justify-between items-center bg-background/10 backdrop-blur-xl border border-white/20 rounded-full shadow-lg shadow-black/5 px-8 py-3 transition-colors duration-300">
+      <nav className="fixed top-6 left-1/2 -translate-x-1/2 w-[90%] max-w-4xl z-50">
+        <div className="flex justify-between items-center bg-background/10 backdrop-blur-xl border border-white/20 rounded-full shadow-lg shadow-black/5 px-6 py-2.5 transition-colors duration-300">
           <div className="flex-shrink-0">
             <Link
               href="/"
-              className={`text-3xl font-bold hover:opacity-80 transition-all duration-300 ${logoColorClass}`}
+              className={`flex items-center gap-2 hover:opacity-80 transition-all duration-300`}
             >
-              Invox
+              <img src="/favicon.ico" alt="Invox Logo" className="w-8 h-8" />
+              <span className={`text-3xl font-bold ${logoColorClass}`}>
+                Invox
+              </span>
             </Link>
           </div>
           <div className="hidden md:flex flex-1 justify-center">
@@ -47,7 +50,7 @@ export default function Navbar() {
               <li>
                 <button
                   onClick={() => scrollToSection("features")}
-                  className={`text-sm font-medium ${textColorClass} ${hoverColorClass} transition-colors duration-300`}
+                  className={`text-sm font-medium ${textColorClass} ${hoverColorClass} transition-colors duration-300 cursor-pointer`}
                 >
                   Features
                 </button>
@@ -55,7 +58,7 @@ export default function Navbar() {
               <li>
                 <button
                   onClick={() => scrollToSection("how-it-works")}
-                  className={`text-sm font-medium ${textColorClass} ${hoverColorClass} transition-colors duration-300`}
+                  className={`text-sm font-medium ${textColorClass} ${hoverColorClass} transition-colors duration-300 cursor-pointer`}
                 >
                   How It Works
                 </button>
@@ -79,7 +82,7 @@ export default function Navbar() {
               <li>
                 <button
                   onClick={() => scrollToSection("about")}
-                  className={`text-sm font-medium ${textColorClass} ${hoverColorClass} transition-colors duration-300`}
+                  className={`text-sm font-medium ${textColorClass} ${hoverColorClass} transition-colors duration-300 cursor-pointer`}
                 >
                   About Us
                 </button>
@@ -90,7 +93,7 @@ export default function Navbar() {
           <div className="md:hidden flex items-center">
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className={`${textColorClass} ${hoverColorClass} transition-colors duration-300`}
+              className={`${textColorClass} ${hoverColorClass} transition-colors duration-300 cursor-pointer active:scale-90`}
             >
               <svg
                 className="w-6 h-6"
@@ -128,7 +131,7 @@ export default function Navbar() {
                     scrollToSection("features");
                     setMobileMenuOpen(false);
                   }}
-                  className={`w-full text-left px-6 py-3 text-sm font-medium ${textColorClass} ${hoverColorClass} transition-colors duration-300`}
+                  className={`w-full text-left px-6 py-3 text-sm font-medium ${textColorClass} ${hoverColorClass} transition-colors duration-300 cursor-pointer`}
                 >
                   Features
                 </button>
@@ -139,7 +142,7 @@ export default function Navbar() {
                     scrollToSection("how-it-works");
                     setMobileMenuOpen(false);
                   }}
-                  className={`w-full text-left px-6 py-3 text-sm font-medium ${textColorClass} ${hoverColorClass} transition-colors duration-300`}
+                  className={`w-full text-left px-6 py-3 text-sm font-medium ${textColorClass} ${hoverColorClass} transition-colors duration-300 cursor-pointer`}
                 >
                   How It Works
                 </button>
@@ -168,7 +171,7 @@ export default function Navbar() {
                     scrollToSection("about");
                     setMobileMenuOpen(false);
                   }}
-                  className={`w-full text-left px-6 py-3 text-sm font-medium ${textColorClass} ${hoverColorClass} transition-colors duration-300`}
+                  className={`w-full text-left px-6 py-3 text-sm font-medium ${textColorClass} ${hoverColorClass} transition-colors duration-300 cursor-pointer`}
                 >
                   About Us
                 </button>

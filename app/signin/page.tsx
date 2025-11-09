@@ -27,8 +27,8 @@ export default function Signin() {
           noise={0.2}
           glow={0.5}
         />
-        <div className="absolute mt-[30px] inset-0 flex items-center justify-center pointer-events-none">
-          <div className="bg-black/80 backdrop-blur-md p-10 max-w-[450px] rounded-3xl pointer-events-auto">
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none pt-24 md:pt-0">
+          <div className="bg-black/80 backdrop-blur-md p-8 md:p-10 max-w-[450px] rounded-3xl pointer-events-auto mx-4">
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
               <h2 className="text-xl font-semibold text-white mb-2">

@@ -69,7 +69,7 @@ export default function SignIn() {
                 <div className="space-y-4">
                   <button
                     onClick={handleGoogleSignIn}
-                    className="group relative w-full px-6 py-4 rounded-2xl bg-white hover:bg-gray-50 border-2 border-gray-200 shadow-xl hover:shadow-2xl transition-all duration-500 hover:scale-[1.02] flex items-center justify-center gap-4 overflow-hidden"
+                    className="group relative w-full px-6 py-4 rounded-2xl bg-white hover:bg-gray-50 border-2 border-gray-200 shadow-xl hover:shadow-2xl transition-all duration-500 hover:scale-[1.02] flex items-center justify-center gap-4 overflow-hidden cursor-pointer active:scale-[0.98]"
                   >
                     {/* Animated gradient background on hover */}
                     <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-pink-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl" />

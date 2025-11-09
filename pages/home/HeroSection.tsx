@@ -132,7 +132,7 @@ export default function HeroSection() {
 
                 <button
                   onClick={() => setUploadOpen(false)}
-                  className="p-2 rounded-lg hover:bg-neutral-800/50 transition-colors"
+                  className="p-2 rounded-lg hover:bg-neutral-800/50 transition-colors cursor-pointer active:scale-90"
                 >
                   <X className="w-5 h-5 text-neutral-400 hover:text-white" />
                 </button>
