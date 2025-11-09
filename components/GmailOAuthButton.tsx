@@ -52,7 +52,69 @@ export function GmailOAuthButton({
         );
       }
 
-      // Step 3: Listen for callback
+      // Step 3: Set up BroadcastChannel as additional communication method
+      let broadcastChannel: BroadcastChannel | null = null;
+      if (typeof BroadcastChannel !== "undefined") {
+        broadcastChannel = new BroadcastChannel("gmail-oauth");
+      }
+
+      // Step 4: Set up timeout for abandoned auth (no popup.closed polling to avoid COOP warnings)
+      let checkSessionStorageInterval: NodeJS.Timeout | null = null;
+      const authTimeout = setTimeout(() => {
+        setLoading(false);
+        setError("Authorization timed out. Please try again.");
+        sessionStorage.removeItem("gmail_oauth_state");
+        broadcastChannel?.close();
+        if (checkSessionStorageInterval)
+          clearInterval(checkSessionStorageInterval);
+      }, 300000); // 5 minutes
+
+      // Step 5: Listen for callback via multiple channels
+      const processAuthCallback = async (
+        code: string,
+        callbackState: string
+      ) => {
+        clearTimeout(authTimeout);
+        broadcastChannel?.close();
+        if (checkSessionStorageInterval)
+          clearInterval(checkSessionStorageInterval);
+
+        // Verify state matches
+        const storedState = sessionStorage.getItem("gmail_oauth_state");
+        if (callbackState !== storedState) {
+          setError("Security verification failed. Please try again.");
+          setLoading(false);
+          return;
+        }
+
+        try {
+          // Send to backend
+          const result = await emailConfigApi.gmailCallback(
+            code,
+            callbackState
+          );
+
+          setSuccess(`Successfully connected to ${result.email_address}! ✓`);
+          onSuccess(result.email_address);
+
+          // Try to close popup
+          try {
+            popup?.close();
+          } catch (e) {
+            // Ignore
+          }
+        } catch (err: any) {
+          setError(err.message || "Failed to complete OAuth flow");
+          if (onError) {
+            onError(err.message);
+          }
+        } finally {
+          setLoading(false);
+          sessionStorage.removeItem("gmail_oauth_state");
+        }
+      };
+
+      // Listen via postMessage
       const handleMessage = async (event: MessageEvent) => {
         // Security: Verify origin
         if (event.origin !== window.location.origin) {
@@ -61,41 +123,13 @@ export function GmailOAuthButton({
 
         if (event.data.type === "gmail-oauth-callback") {
           const { code, state: callbackState } = event.data;
-
-          // Verify state matches
-          const storedState = sessionStorage.getItem("gmail_oauth_state");
-          if (callbackState !== storedState) {
-            setError("Security verification failed. Please try again.");
-            setLoading(false);
-            window.removeEventListener("message", handleMessage);
-            return;
-          }
-
-          try {
-            // Send to backend
-            const result = await emailConfigApi.gmailCallback(
-              code,
-              callbackState
-            );
-
-            setSuccess(`Successfully connected to ${result.email_address}! ✓`);
-            onSuccess(result.email_address);
-
-            // Close popup
-            if (popup && !popup.closed) {
-              popup.close();
-            }
-          } catch (err: any) {
-            setError(err.message || "Failed to complete OAuth flow");
-            if (onError) {
-              onError(err.message);
-            }
-          } finally {
-            setLoading(false);
-            window.removeEventListener("message", handleMessage);
-            sessionStorage.removeItem("gmail_oauth_state");
-          }
+          await processAuthCallback(code, callbackState);
+          window.removeEventListener("message", handleMessage);
         } else if (event.data.type === "gmail-oauth-error") {
+          clearTimeout(authTimeout);
+          broadcastChannel?.close();
+          if (checkSessionStorageInterval)
+            clearInterval(checkSessionStorageInterval);
           setError(event.data.error || "OAuth authorization failed");
           if (onError) {
             onError(event.data.error);
@@ -108,15 +142,35 @@ export function GmailOAuthButton({
 
       window.addEventListener("message", handleMessage);
 
-      // Monitor popup close
-      const checkPopupClosed = setInterval(() => {
-        if (popup.closed) {
-          clearInterval(checkPopupClosed);
-          if (loading && !success) {
-            setLoading(false);
-            setError("Authorization cancelled. Please try again.");
+      // Listen via BroadcastChannel
+      if (broadcastChannel) {
+        broadcastChannel.onmessage = async (event) => {
+          if (event.data.type === "gmail-oauth-callback") {
+            const { code, state: callbackState } = event.data;
+            await processAuthCallback(code, callbackState);
             window.removeEventListener("message", handleMessage);
-            sessionStorage.removeItem("gmail_oauth_state");
+          }
+        };
+      }
+
+      // Poll sessionStorage as final fallback (for when all postMessage methods fail)
+      checkSessionStorageInterval = setInterval(() => {
+        const result = sessionStorage.getItem("gmail_oauth_result");
+        if (result) {
+          try {
+            const {
+              code,
+              state: callbackState,
+              timestamp,
+            } = JSON.parse(result);
+            // Only process if less than 5 minutes old
+            if (Date.now() - timestamp < 300000) {
+              sessionStorage.removeItem("gmail_oauth_result");
+              processAuthCallback(code, callbackState);
+              window.removeEventListener("message", handleMessage);
+            }
+          } catch (e) {
+            console.warn("Failed to parse oauth result from sessionStorage");
           }
         }
       }, 1000);
