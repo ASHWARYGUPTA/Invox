@@ -62,40 +62,75 @@ function GmailCallbackContent() {
       return;
     }
 
-    // Send callback data to parent window
-    if (window.opener) {
-      try {
-        window.opener.postMessage(
-          {
-            type: "gmail-oauth-callback",
-            code,
-            state,
-          },
-          window.location.origin
-        );
+    // Send callback data to parent window with multiple fallback methods
+    const authData = {
+      type: "gmail-oauth-callback",
+      code,
+      state,
+    };
 
+    let messageSent = false;
+
+    // Method 1: Try window.opener (most common)
+    if (window.opener && !window.opener.closed) {
+      try {
+        window.opener.postMessage(authData, window.location.origin);
+        messageSent = true;
+      } catch (err) {
+        console.warn("Failed to send via window.opener:", err);
+      }
+    }
+
+    // Method 2: Try window.parent (in case popup is actually an iframe)
+    if (!messageSent && window.parent && window.parent !== window) {
+      try {
+        window.parent.postMessage(authData, window.location.origin);
+        messageSent = true;
+      } catch (err) {
+        console.warn("Failed to send via window.parent:", err);
+      }
+    }
+
+    // Method 3: Broadcast to all windows (last resort)
+    if (!messageSent) {
+      try {
+        // Use BroadcastChannel API if available
+        if (typeof BroadcastChannel !== "undefined") {
+          const channel = new BroadcastChannel("gmail-oauth");
+          channel.postMessage(authData);
+          channel.close();
+          messageSent = true;
+        }
+      } catch (err) {
+        console.warn("Failed to send via BroadcastChannel:", err);
+      }
+    }
+
+    if (messageSent) {
+      setStatus("success");
+      setMessage("Authorization successful! Connecting your Gmail account...");
+
+      // Close after 2 seconds
+      setTimeout(() => {
+        window.close();
+      }, 2000);
+    } else {
+      // Store in sessionStorage as final fallback
+      try {
+        sessionStorage.setItem(
+          "gmail_oauth_result",
+          JSON.stringify({ code, state, timestamp: Date.now() })
+        );
         setStatus("success");
         setMessage(
-          "Authorization successful! Connecting your Gmail account..."
+          "Authorization successful! Please return to the main window to complete setup."
         );
-
-        // Close after 2 seconds
-        setTimeout(() => {
-          window.close();
-        }, 2000);
       } catch (err) {
         setStatus("error");
-        setMessage("Failed to communicate with parent window");
-
-        setTimeout(() => {
-          window.close();
-        }, 3000);
+        setMessage(
+          "Parent window not found. Please close this window and try again from the main application."
+        );
       }
-    } else {
-      setStatus("error");
-      setMessage(
-        "Parent window not found. Please reopen from the main application."
-      );
 
       setTimeout(() => {
         window.close();
