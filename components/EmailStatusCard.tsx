@@ -106,7 +106,7 @@ export function EmailStatusCard() {
 
   return (
     <Card className="@container/card bg-gradient-to-br from-purple-500/10 via-purple-500/5 to-card shadow-sm border-purple-500/20 overflow-hidden">
-      <CardHeader className="max-w-full overflow-hidden">
+      <CardHeader className="max-w-full">
         <div className="flex items-center justify-between">
           <CardDescription>Email Polling</CardDescription>
           <Badge
@@ -116,9 +116,11 @@ export function EmailStatusCard() {
             {status.polling_enabled ? "Active" : "Paused"}
           </Badge>
         </div>
-        <CardTitle className="text-lg font-semibold text-purple-700 dark:text-purple-400 flex items-center gap-2 max-w-full">
-          <Mail className="h-5 w-5 shrink-0" />
-          <span className="truncate min-w-0">{status.email_address}</span>
+        <CardTitle className="text-base md:text-lg font-semibold text-purple-700 dark:text-purple-400 flex items-center gap-2 w-full min-w-0">
+          <Mail className="h-4 w-4 md:h-5 md:w-5 shrink-0" />
+          <span className="truncate overflow-hidden text-ellipsis">
+            {status.email_address}
+          </span>
         </CardTitle>
       </CardHeader>
       <CardFooter className="flex-col items-start gap-2">

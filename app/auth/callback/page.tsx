@@ -62,7 +62,7 @@ export default function AuthCallback() {
 					<p className="text-muted-foreground mb-4">{error}</p>
 					<button
 						onClick={() => router.push("/signin")}
-						className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
+						className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 cursor-pointer transition-all duration-200 hover:shadow-md active:scale-95"
 					>
 						Try Again
 					</button>

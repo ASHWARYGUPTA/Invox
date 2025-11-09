@@ -66,7 +66,7 @@ export default function NavbarMenu() {
           // Authenticated User - Show Avatar Only (No Name)
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="flex items-center p-1 rounded-full bg-background/10 backdrop-blur-xl border border-white/20 hover:bg-background/20 transition-all duration-300 hover:scale-105">
+              <button className="flex items-center p-1 rounded-full bg-background/10 backdrop-blur-xl border border-white/20 hover:bg-background/20 transition-all duration-300 hover:scale-105 cursor-pointer">
                 <Avatar className="h-9 w-9 ring-2 ring-white/60 hover:ring-white/80 transition-all duration-300">
                   <AvatarImage
                     src={user.picture}
@@ -111,14 +111,14 @@ export default function NavbarMenu() {
         ) : (
           // Not Authenticated - Show Enhanced Join With Google Button
           <Link href="/auth/signin">
-            <button className="group relative px-6 py-3 rounded-full bg-white hover:bg-gray-50 border border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 flex items-center gap-3 overflow-hidden">
+            <button className="group relative px-4 py-2 rounded-full bg-white hover:bg-gray-50 border border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 flex items-center gap-2 overflow-hidden cursor-pointer">
               {/* Animated gradient background on hover */}
               <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-pink-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-full" />
 
               {/* Google Logo */}
-              <div className="relative z-10 flex items-center justify-center">
+              <div className="relative z-10 flex items-center justify-center shrink-0">
                 <svg
-                  className="w-5 h-5 transition-transform duration-300 group-hover:rotate-12"
+                  className="w-4 h-4 transition-transform duration-300 group-hover:rotate-12"
                   viewBox="0 0 24 24"
                 >
                   <path
@@ -141,7 +141,7 @@ export default function NavbarMenu() {
               </div>
 
               {/* Button Text */}
-              <span className="relative z-10 font-semibold text-gray-700 group-hover:text-gray-900 transition-colors duration-300">
+              <span className="relative z-10 text-sm font-semibold text-gray-700 group-hover:text-gray-900 transition-colors duration-300 whitespace-nowrap">
                 Join with Google
               </span>
 
@@ -159,7 +159,7 @@ export default function NavbarMenu() {
           <>
             <button
               onClick={() => setMenuOpen(!menuOpen)}
-              className="flex items-center gap-2 p-2 rounded-full bg-background/10 backdrop-blur-xl border border-white/20"
+              className="flex items-center gap-2 p-2 rounded-full bg-background/10 backdrop-blur-xl border border-white/20 cursor-pointer hover:bg-background/20 transition-all duration-200 active:scale-95"
             >
               <Avatar className="h-9 w-9 ring-2 ring-white/60 hover:ring-white/80 transition-all duration-300">
                 <AvatarImage src={user.picture} alt={user.name || user.email} />
@@ -197,7 +197,7 @@ export default function NavbarMenu() {
         ) : (
           // Mobile Not Authenticated - Enhanced Join Button
           <Link href="/auth/signin">
-            <button className="group relative px-4 py-2.5 rounded-full bg-white hover:bg-gray-50 border border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 flex items-center gap-2 overflow-hidden">
+            <button className="group relative px-4 py-2.5 rounded-full bg-white hover:bg-gray-50 border border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 flex items-center gap-2 overflow-hidden cursor-pointer">
               {/* Animated gradient background on hover */}
               <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-pink-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-full" />
 

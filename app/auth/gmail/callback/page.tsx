@@ -192,7 +192,7 @@ function GmailCallbackContent() {
         <div className="mt-6 text-center">
           <button
             onClick={() => window.close()}
-            className="text-sm text-blue-600 hover:text-blue-700 underline"
+            className="text-sm text-blue-600 hover:text-blue-700 underline cursor-pointer transition-all duration-200 hover:opacity-80"
           >
             Close this window
           </button>
