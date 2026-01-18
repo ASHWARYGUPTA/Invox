@@ -1,7 +1,7 @@
 # 📚 Invox - Complete Technical Documentation
 
 **Version:** 1.0  
-**Last Updated:** November 8, 2025  
+**Last Updated:** January 18, 2026  
 **Status:** Production Ready
 
 ---
@@ -18,10 +18,11 @@
 8. [Duplicate Prevention System](#duplicate-prevention-system)
 9. [Gmail OAuth Implementation](#gmail-oauth-implementation)
 10. [Export Features](#export-features)
-11. [API Reference](#api-reference)
-12. [Troubleshooting](#troubleshooting)
-13. [Development Guide](#development-guide)
-14. [What's Next](#whats-next)
+11. [RAG Chat System](#rag-chat-system)
+12. [API Reference](#api-reference)
+13. [Troubleshooting](#troubleshooting)
+14. [Development Guide](#development-guide)
+15. [What's Next](#whats-next)
 
 ---
 
@@ -322,19 +323,16 @@ pnpm dev
 ### Verification Steps
 
 1. **Frontend Test:**
-
    - Open http://localhost:3000
    - See beautiful landing page with Prism background
    - Click "Join with Google" button
 
 2. **Backend Test:**
-
    - Open http://localhost:8000/docs
    - See Swagger UI with all API endpoints
    - Try `/health` endpoint
 
 3. **Authentication Test:**
-
    - Sign in with Google
    - Should redirect to Google OAuth
    - After approval, redirect back to dashboard
@@ -1122,7 +1120,6 @@ GMAIL_REDIRECT_URI=http://localhost:3000/auth/gmail/callback
 **Required Scopes:**
 
 1. **`gmail.readonly`**
-
    - Read emails and attachments
    - Check for new messages
    - No ability to send or delete
@@ -1222,18 +1219,15 @@ service.users().messages().modify(
 ### Security Considerations
 
 1. **Token Encryption:**
-
    - All tokens encrypted with Fernet (AES-256)
    - Encryption key stored in environment variable
    - Never logged or exposed in responses
 
 2. **CSRF Protection:**
-
    - State parameter in OAuth flow
    - Validated on callback
 
 3. **Scope Limitations:**
-
    - Only request necessary scopes
    - No send/delete permissions
 
@@ -1828,6 +1822,122 @@ fix(email): resolve duplicate email processing
 docs(readme): update installation instructions
 chore(deps): update FastAPI to 0.115.5
 ```
+
+---
+
+## 🤖 RAG Chat System
+
+### Overview
+
+The RAG (Retrieval-Augmented Generation) Chat System is an intelligent conversational interface that allows users to query their invoices using natural language. It combines semantic search with SQL analytics to provide accurate and contextual responses.
+
+### Key Features
+
+- **Hybrid Query Processing**: Automatically routes queries to SQL or semantic search
+- **Natural Language Understanding**: Ask questions in plain English
+- **Smart Classification**: Uses Google Gemini AI to classify query intent
+- **Vector Search**: ChromaDB for semantic invoice search
+- **User-Specific**: All queries filtered by user for data privacy
+
+### Architecture
+
+```
+User Query
+    ↓
+Query Classifier (Gemini AI)
+    ↓
+┌─────────────┴─────────────┐
+│                           │
+ANALYTICAL              SEMANTIC
+    ↓                       ↓
+SQL Agent              RAG System
+    ↓                       ↓
+PostgreSQL            ChromaDB
+    ↓                       ↓
+└─────────────┬─────────────┘
+              ↓
+    Response Synthesizer (Gemini)
+              ↓
+    Natural Language Response
+```
+
+### Quick Setup
+
+1. **Install Dependencies**:
+
+```bash
+cd backend
+pip install chromadb==0.5.23 sentence-transformers==3.3.1
+```
+
+2. **Start Services**:
+
+```bash
+# Backend
+uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+
+# Frontend
+pnpm dev
+```
+
+3. **Access Chat**:
+   - Navigate to http://localhost:3000/chat
+   - Click "Re-index Invoices" to index your invoices
+   - Start chatting!
+
+### Example Queries
+
+**Analytical (SQL-based)**:
+
+- "Show all pending invoices"
+- "What's the total amount due?"
+- "List invoices from last month"
+- "How many invoices do I have?"
+
+**Semantic (Vector search)**:
+
+- "Find invoices related to office supplies"
+- "Show me technology purchases"
+- "Invoices from Acme Corp"
+- "Find subscription-related invoices"
+
+### API Endpoints
+
+| Endpoint              | Method | Description               |
+| --------------------- | ------ | ------------------------- |
+| `/api/v1/chat/query`  | POST   | Process chat query        |
+| `/api/v1/chat/index`  | POST   | Index invoices for search |
+| `/api/v1/chat/status` | GET    | Check system status       |
+
+### Components
+
+**Backend Services**:
+
+- `rag_system.py` - Vector search with ChromaDB
+- `query_classifier.py` - Query classification
+- `sql_agent.py` - SQL query generation
+- `hybrid_query_engine.py` - Orchestration
+
+**Frontend**:
+
+- `app/chat/page.tsx` - Chat page
+- `components/ChatInterface.tsx` - Chat UI
+
+### Performance
+
+- Query Classification: ~500ms
+- SQL Queries: 10-50ms
+- Vector Search: 50-200ms
+- Response Generation: 1-2s
+- **Total Average: 2-3 seconds**
+
+### Documentation
+
+For detailed documentation, see:
+
+- [RAG_CHAT_README.md](backend/RAG_CHAT_README.md) - Full technical documentation
+- [RAG_SETUP_GUIDE.md](RAG_SETUP_GUIDE.md) - Quick setup guide
+- [RAG_IMPLEMENTATION_SUMMARY.md](RAG_IMPLEMENTATION_SUMMARY.md) - Implementation details
 
 ---
 

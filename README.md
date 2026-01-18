@@ -56,7 +56,15 @@
 - Multi-page document processing
 - 99% accuracy rate with automatic validation
 
-### 📧 Smart Email Integration
+### � RAG Chat System (NEW!)
+
+- **Natural Language Queries** - Ask questions about your invoices in plain English
+- **Hybrid Search** - Combines SQL analytics with semantic search
+- **Smart Classification** - Automatically routes queries to appropriate system
+- **Conversational AI** - Powered by Google Gemini for natural responses
+- **Example Queries**: "Show all pending invoices", "Find office supply purchases", "What's my total due?"
+
+### �📧 Smart Email Integration
 
 - **Gmail OAuth Integration** - Automatic invoice detection from emails
 - Background polling system (checks every 60 seconds)
@@ -348,17 +356,14 @@ The backend will be available at:
 ### 4️⃣ Verify Installation
 
 1. **Frontend:** Open http://localhost:3000
-
    - You should see the landing page with 3D Prism background
    - Click "Join with Google" button
 
 2. **Backend:** Open http://localhost:8000/docs
-
    - You should see the Swagger UI with all API endpoints
    - Try the `/health` endpoint
 
 3. **Authentication:** Sign in with Google
-
    - Should redirect to Google OAuth
    - After approval, redirect back to dashboard
 
