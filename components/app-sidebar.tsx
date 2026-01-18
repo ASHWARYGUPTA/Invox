@@ -9,6 +9,7 @@ import {
   PieChart,
   Settings2,
   SquareTerminal,
+  MessageSquare,
 } from "lucide-react";
 
 import { NavMain } from "@/components/nav-main";
@@ -25,6 +26,18 @@ import {
 import { authApi, tokenManager } from "@/lib/api/client"; // This is sample data.
 const data = {
   navMain: [
+    {
+      title: "Chat",
+      url: "/chat",
+      icon: MessageSquare,
+      isActive: false,
+      items: [
+        {
+          title: "Ask Questions",
+          url: "/chat",
+        },
+      ],
+    },
     {
       title: "Playground",
       url: "#",
@@ -154,7 +167,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             avatar:
               userData.picture ||
               `https://ui-avatars.com/api/?name=${encodeURIComponent(
-                userData.name || "User"
+                userData.name || "User",
               )}&background=random`,
           });
         } else {
@@ -168,7 +181,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               avatar:
                 userData.picture ||
                 `https://ui-avatars.com/api/?name=${encodeURIComponent(
-                  userData.name || "User"
+                  userData.name || "User",
                 )}&background=random`,
             });
           } catch (error) {
