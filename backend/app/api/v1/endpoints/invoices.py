@@ -35,7 +35,7 @@ async def upload_invoice(
     """
     Upload and process an invoice file (PDF, JPG, PNG)
     
-    - Extracts invoice data using Google Gemini AI
+    - Extracts invoice data using OpenRouter AI
     - Stores invoice in database
     - Returns extracted information
     """
@@ -62,7 +62,7 @@ async def upload_invoice(
     print(f"--- 📤 Processing upload: {file.filename} ({file.content_type}, {file_size} bytes) ---")
     
     try:
-        # Process the invoice file with Gemini AI
+        # Process the invoice file with OpenRouter AI
         extraction_result = process_invoice_file(file_contents, file.content_type)
         
         # Extract text if PDF (for search/reference)

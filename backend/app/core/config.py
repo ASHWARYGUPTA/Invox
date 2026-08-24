@@ -26,8 +26,12 @@ class Settings(BaseSettings):
     GMAIL_CLIENT_SECRET: Optional[str] = None
     GMAIL_REDIRECT_URI: str = "http://localhost:3000/auth/gmail/callback"  # Override in production
     
-    # Google Gemini AI (for invoice processing)
-    GOOGLE_API_KEY: Optional[str] = None
+    # OpenRouter API (for invoice processing)
+    OPENROUTER_API_KEY: Optional[str] = None
+    OPENROUTER_MODEL_NAME: str = "mistralai/mistral-7b-instruct:free"
+    LLM_MODEL: Optional[str] = "mistralai/mistral-7b-instruct:free"
+    OPENROUTER_EMBEDDING_MODEL: Optional[str] = "nvidia/nemotron-3-embed-1b:free"
+    OPENROUTER_FALLBACK_MODELS: Optional[str] = "meta-llama/llama-3.1-8b-instruct:free,microsoft/phi-3-mini-128k-instruct:free"
     
     # Encryption (for email credentials)
     ENCRYPTION_KEY: Optional[str] = None

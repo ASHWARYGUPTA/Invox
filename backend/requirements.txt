@@ -1,24 +1,31 @@
-fastapi==0.115.5
-uvicorn[standard]==0.32.1
-sqlalchemy==2.0.36
-alembic==1.14.0
-psycopg[binary]==3.2.3
-python-dotenv==1.0.1
-pydantic==2.10.3
-pydantic-settings==2.6.1
-python-jose[cryptography]==3.3.0
-passlib[bcrypt]==1.7.4
-python-multipart==0.0.18
-email-validator==2.2.0
-httpx==0.28.1
+# Core Web Framework
+fastapi>=0.115.5
+uvicorn[standard]>=0.32.1
+
+# Database
+sqlalchemy>=2.0.36
+alembic>=1.14.0
+psycopg[binary]>=3.2.3
+
+# Configuration & Validation
+python-dotenv>=1.0.1
+pydantic>=2.10.3
+pydantic-settings>=2.6.1
+
+# Authentication & Security
+python-jose[cryptography]>=3.3.0
+passlib[bcrypt]>=1.7.4
+python-multipart>=0.0.18
+email-validator>=2.2.0
+cryptography>=42.0.0
 
 # Invoice Processing Dependencies
-google-genai==1.59.0
-PyMuPDF==1.25.1
-Pillow==11.0.0
-google_auth_oauthlib
-google-api-python-client
+openai>=1.14.0
+PyMuPDF>=1.25.1
+Pillow>=10.0.0
+google-auth-oauthlib>=1.2.0
+google-api-python-client>=2.140.0
 
-# RAG System Dependencies (Lightweight - CPU only)
-chromadb==0.5.23
-sentence-transformers==3.3.1
+# RAG System Dependencies
+chromadb>=0.6.0
+sentence-transformers>=3.0.0

@@ -1,0 +1,37 @@
+# ── Backend .dockerignore ────────────────────────────────────
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+.eggs/
+*.egg
+
+# Dev/test files
+.env
+.env.*
+*.log
+*.pid
+.git
+.gitignore
+*.md
+
+# IDE
+.vscode/
+.idea/
+
+# Test artifacts
+.pytest_cache/
+.mypy_cache/
+coverage/
+htmlcov/
+.coverage
+
+# Local ChromaDB (will use Docker volume)
+chroma_db/
+
+# Alembic compiled
+alembic/versions/*.pyc

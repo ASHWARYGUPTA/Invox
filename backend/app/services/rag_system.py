@@ -1,10 +1,11 @@
 """
 RAG System for Invoice Semantic Search
-Uses ChromaDB and Google Gemini for embeddings and search
+Uses ChromaDB with local sentence-transformers embeddings (no API key required)
+and OpenRouter for response synthesis.
 """
 
 import chromadb
-from chromadb.utils import embedding_functions
+from chromadb import Documents, EmbeddingFunction, Embeddings
 from typing import List, Dict, Any
 import json
 import os
@@ -12,19 +13,46 @@ from sqlalchemy.orm import Session
 from app.models.invoice import Invoice
 
 
+class LocalEmbeddingFunction(EmbeddingFunction):
+    """
+    Local embedding function using sentence-transformers.
+    Runs on CPU, no API key required, no rate limits.
+    Model: all-MiniLM-L6-v2 (~80 MB, fast, good quality for semantic search)
+    """
+
+    def __init__(self, model_name: str = "all-MiniLM-L6-v2"):
+        self.model_name = model_name
+        self._model = None  # lazy load
+
+    def _load_model(self):
+        if self._model is None:
+            try:
+                from sentence_transformers import SentenceTransformer
+                self._model = SentenceTransformer(self.model_name)
+                print(f"✅ Loaded local embedding model: {self.model_name}")
+            except ImportError:
+                print("⚠️  sentence-transformers not installed. Run: pip install sentence-transformers")
+                raise
+
+    def __call__(self, input: Documents) -> Embeddings:
+        self._load_model()
+        embeddings = self._model.encode(list(input), convert_to_numpy=True)
+        return embeddings.tolist()
+
+
 class RAGSystem:
     """Semantic search over invoice descriptions"""
-    
+
+    EMBEDDING_MODEL = "all-MiniLM-L6-v2"  # ~80 MB, runs on CPU
+
     def __init__(self, collection_name: str = "invoices"):
         # Initialize ChromaDB
         self.client = chromadb.PersistentClient(path="./chroma_db")
-        
-        # Use lightweight embedding function (smaller model)
-        # all-MiniLM-L6-v2 is only ~80MB vs larger models (>400MB)
-        self.embedding_function = embedding_functions.SentenceTransformerEmbeddingFunction(
-            model_name="all-MiniLM-L6-v2"
-        )
-        
+
+        # Local embeddings — no API key, no rate limits, no 401s
+        print(f"🔢 Embedding model: {self.EMBEDDING_MODEL} (local)")
+        self.embedding_function = LocalEmbeddingFunction(model_name=self.EMBEDDING_MODEL)
+
         # Get or create collection
         self.collection = self.client.get_or_create_collection(
             name=collection_name,

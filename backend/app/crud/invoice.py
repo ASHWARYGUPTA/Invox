@@ -23,7 +23,7 @@ def create_invoice(
         db: Database session
         user_id: ID of the user who uploaded the invoice
         invoice_data: Basic invoice information
-        extraction_result: AI-extracted data from Gemini
+        extraction_result: AI-extracted data from OpenRouter
         extracted_text: Raw text extracted from the document
     
     Returns:

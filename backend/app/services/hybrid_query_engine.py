@@ -1,13 +1,12 @@
 """
 Hybrid Query Engine
-Orchestrates SQL Agent and RAG System with Gemini for response synthesis
+Orchestrates SQL Agent and RAG System with OpenRouter for response synthesis
 """
 
 from .query_classifier import QueryClassifier
 from .sql_agent import SQLAgent
 from .rag_system import RAGSystem
-from google import genai
-from google.genai import types
+from openai import OpenAI
 from typing import Dict, Any
 import json
 from sqlalchemy.orm import Session
@@ -22,13 +21,16 @@ class HybridQueryEngine:
         self.sql_agent = SQLAgent()
         self.rag_system = RAGSystem()
         
-        # Initialize Gemini for response synthesis
-        api_key = settings.GOOGLE_API_KEY
+        # Initialize OpenRouter for response synthesis
+        api_key = getattr(settings, 'OPENROUTER_API_KEY', None)
         if not api_key:
-            raise ValueError("GOOGLE_API_KEY not found in environment variables")
+            raise ValueError("OPENROUTER_API_KEY not found in environment variables")
         
-        self.client = genai.Client(api_key=api_key)
-        self.model_name = 'gemini-2.0-flash-exp'
+        self.client = OpenAI(
+            base_url="https://openrouter.ai/api/v1",
+            api_key=api_key
+        )
+        self.model_name = getattr(settings, 'LLM_MODEL', None) or getattr(settings, 'OPENROUTER_MODEL_NAME', 'google/gemma-4-26b-a4b-it:free')
     
     def query(self, user_query: str, user_id: str, db: Session) -> Dict[str, Any]:
         """
@@ -77,7 +79,7 @@ class HybridQueryEngine:
                             user_query: str, 
                             results: Dict, 
                             context_type: str) -> str:
-        """Generate natural language response from results using Gemini"""
+        """Generate natural language response from results using OpenRouter"""
         
         synthesis_prompt = f"""
 You are a helpful financial assistant explaining invoice query results to a user.
@@ -102,16 +104,20 @@ Answer:
 """
         
         try:
-            response = self.client.models.generate_content(
+            response = self.client.chat.completions.create(
                 model=self.model_name,
-                contents=synthesis_prompt,
-                config=types.GenerateContentConfig(
-                    temperature=0.7,
-                    max_output_tokens=1000
-                )
+                messages=[
+                    {"role": "user", "content": synthesis_prompt}
+                ],
+                temperature=0.7,
+                max_tokens=1000
             )
             
-            return response.text.strip()
+            message = response.choices[0].message
+            content = message.content or getattr(message, 'reasoning', None) or ""
+            if not content.strip():
+                raise ValueError("Empty content and reasoning in LLM response")
+            return content.strip()
         
         except Exception as e:
             print(f"Error synthesizing response: {e}")

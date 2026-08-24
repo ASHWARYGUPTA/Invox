@@ -1,10 +1,9 @@
 """
-Query Classifier using Google Gemini
+Query Classifier using OpenRouter
 Classifies user queries into ANALYTICAL or SEMANTIC
 """
 
-from google import genai
-from google.genai import types
+from openai import OpenAI
 from typing import Literal
 from app.core.config import settings
 
@@ -47,13 +46,16 @@ Respond with ONLY one word: ANALYTICAL or SEMANTIC
 """
     
     def __init__(self):
-        """Initialize Gemini model"""
-        api_key = settings.GOOGLE_API_KEY
+        """Initialize OpenRouter model"""
+        api_key = getattr(settings, 'OPENROUTER_API_KEY', None)
         if not api_key:
-            raise ValueError("GOOGLE_API_KEY not found in environment variables")
+            raise ValueError("OPENROUTER_API_KEY not found in environment variables")
         
-        self.client = genai.Client(api_key=api_key)
-        self.model_name = 'gemini-2.0-flash-exp'
+        self.client = OpenAI(
+            base_url="https://openrouter.ai/api/v1",
+            api_key=api_key
+        )
+        self.model_name = getattr(settings, 'LLM_MODEL', None) or getattr(settings, 'OPENROUTER_MODEL_NAME', 'google/gemma-4-26b-a4b-it:free')
     
     def classify(self, query: str) -> QueryType:
         """
@@ -77,22 +79,25 @@ Respond with ONLY one word: ANALYTICAL or SEMANTIC
                 print(f"🎯 Quick match: '{keyword}' found → ANALYTICAL")
                 return 'ANALYTICAL'
         
-        # Otherwise, use Gemini classification
+        # Otherwise, use OpenRouter classification
         try:
-            response = self.client.models.generate_content(
+            prompt = self.CLASSIFICATION_PROMPT.format(query=query)
+            response = self.client.chat.completions.create(
                 model=self.model_name,
-                contents=self.CLASSIFICATION_PROMPT.format(query=query),
-                config=types.GenerateContentConfig(
-                    temperature=0,
-                    max_output_tokens=10
-                )
+                messages=[
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.0,
+                max_tokens=10
             )
             
-            raw_response = response.text.strip().upper()
+            message = response.choices[0].message
+            raw_content = message.content or getattr(message, 'reasoning', None) or ""
+            raw_response = raw_content.strip().upper()
             classification = raw_response
             
             print(f"🔍 Query: '{query}'")
-            print(f"📊 Gemini raw response: '{raw_response}'")
+            print(f"📊 OpenRouter raw response: '{raw_response}'")
             print(f"✅ Classification: {classification}")
             
             # Fallback to ANALYTICAL if unclear

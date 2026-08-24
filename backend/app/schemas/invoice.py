@@ -15,10 +15,10 @@ class InvoiceStatus(str, Enum):
     FAILED = "failed"
 
 
-# --- Gemini AI Response Schema (from processing_service.py) ---
+# --- OpenRouter AI Response Schema (from processing_service.py) ---
 class InvoiceExtractionResponse(BaseModel):
     """
-    Schema matching the exact format returned by Gemini AI
+    Schema matching the exact format returned by OpenRouter AI
     This is what we get from the AI extraction
     """
     invoice_id: Optional[str] = None

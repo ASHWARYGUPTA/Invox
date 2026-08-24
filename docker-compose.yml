@@ -1,0 +1,72 @@
+version: "3.9"
+
+# ============================================================
+# Invox - Full Stack Docker Compose
+# Run with: docker compose up --build
+# ============================================================
+
+services:
+
+  # ── FastAPI Backend ────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: invox-backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./backend/.env
+    volumes:
+      # Persist ChromaDB data between container restarts
+      - chroma_data:/app/chroma_db
+      # Hot-reload: mount source code (remove in pure production)
+      - ./backend:/app
+    environment:
+      # Override anything from .env if needed at compose level
+      - PYTHONUNBUFFERED=1
+      - PYTHONDONTWRITEBYTECODE=1
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    networks:
+      - invox-network
+
+  # ── Next.js Frontend ───────────────────────────────────────
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        # Backend URL as seen from the user's browser
+        NEXT_PUBLIC_BACKEND_URL: http://localhost:8000
+    container_name: invox-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env.local
+    environment:
+      - NODE_ENV=production
+      # Internal service-to-service URL (server-side requests inside Docker)
+      - NEXT_PUBLIC_BACKEND_URL=http://localhost:8000
+      - NEXTAUTH_URL=http://localhost:3000
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - invox-network
+
+# ── Volumes ───────────────────────────────────────────────────
+volumes:
+  chroma_data:
+    driver: local
+
+# ── Networks ──────────────────────────────────────────────────
+networks:
+  invox-network:
+    driver: bridge

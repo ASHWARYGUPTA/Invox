@@ -29,7 +29,7 @@ class Invoice(Base):
     # User relationship
     user_id = Column(String, ForeignKey("users.id"), nullable=False, index=True)
     
-    # Extracted invoice data (from Gemini)
+    # Extracted invoice data (from OpenRouter)
     invoice_id = Column(String, nullable=True, index=True)  # Invoice number from document
     vendor_name = Column(String, nullable=True, index=True)
     amount_due = Column(Float, nullable=True)

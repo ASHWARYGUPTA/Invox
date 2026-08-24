@@ -274,7 +274,7 @@ class EmailPollingService:
     
     def process_attachment(self, filename: str, file_bytes: bytes, content_type: str, user_id: str) -> bool:
         """
-        Process invoice attachment using Gemini AI
+        Process invoice attachment using OpenRouter AI
         
         Args:
             filename: Original filename
@@ -286,7 +286,7 @@ class EmailPollingService:
             True if processed successfully, False otherwise
         """
         try:
-            print(f"  🤖 Processing {filename} with Gemini AI...")
+            print(f"  🤖 Processing {filename} with OpenRouter AI...")
             
             # Map content types
             if content_type == 'text/plain':
@@ -295,7 +295,7 @@ class EmailPollingService:
                 if not content_type.startswith('image/'):
                     content_type = 'image/jpeg'  # Default for images
             
-            # Process with Gemini AI
+            # Process with OpenRouter AI
             extraction_result = process_invoice_file(file_bytes, content_type)
             
             # Get file size and type
