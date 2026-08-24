@@ -1,10 +1,12 @@
 """
-Invoice processing service using Google Gemini AI
-EXACT COPY of logic from backend/app/services/processing_service.py
+Invoice processing service using OpenRouter AI
 """
 import os
 import json
-from google import genai
+import base64
+import time
+from io import BytesIO
+from openai import OpenAI, RateLimitError, NotFoundError
 import fitz  # PyMuPDF
 from PIL import Image
 from fastapi import HTTPException
@@ -13,22 +15,78 @@ from app.schemas.invoice import InvoiceExtractionResponse
 from app.core.config import settings
 
 
-# --- Setup Gemini Client ---
+# --- Setup OpenRouter Client ---
 try:
-    # Get API key from settings
-    api_key = settings.GOOGLE_API_KEY if hasattr(settings, 'GOOGLE_API_KEY') else os.getenv("GOOGLE_API_KEY")
+    api_key = settings.OPENROUTER_API_KEY if hasattr(settings, 'OPENROUTER_API_KEY') else os.getenv("OPENROUTER_API_KEY")
+    model_name = settings.LLM_MODEL or settings.OPENROUTER_MODEL_NAME or "google/gemma-4-26b-a4b-it:free"
     
     if not api_key:
-        print("❌ CRITICAL: GOOGLE_API_KEY not found in environment variables!")
-        print("Please add GOOGLE_API_KEY to your .env file")
+        print("❌ CRITICAL: OPENROUTER_API_KEY not found in environment variables!")
         client = None
     else:
-        print(f"✅ Found GOOGLE_API_KEY: {api_key[:10]}...")
-        client = genai.Client(api_key=api_key)
-        print("--- 🤖 Gemini Client Initialized (Invoice Processing Service) ---")
+        print(f"✅ Found OPENROUTER_API_KEY: {api_key[:10]}...")
+        client = OpenAI(
+            base_url="https://openrouter.ai/api/v1",
+            api_key=api_key,
+        )
+        print(f"--- 🤖 OpenRouter Client Initialized | Model: {model_name} ---")
 except Exception as e:
-    print(f"CRITICAL: Error configuring Gemini API: {e}")
+    print(f"CRITICAL: Error configuring OpenRouter API: {e}")
     client = None
+    model_name = "google/gemma-4-26b-a4b-it:free"
+
+
+def _get_model_chain() -> list:
+    """Return [primary_model, *fallbacks] from settings."""
+    primary = settings.LLM_MODEL or settings.OPENROUTER_MODEL_NAME or "qwen/qwen3-8b:free"
+    fallbacks_str = getattr(settings, 'OPENROUTER_FALLBACK_MODELS', '') or ''
+    fallbacks = [m.strip() for m in fallbacks_str.split(',') if m.strip()]
+    return [primary] + fallbacks
+
+
+def _chat_with_retry(messages: list, **kwargs):
+    """
+    Call OpenRouter with a model fallback chain.
+    Falls back to next model on:
+      - 429 RateLimitError (rate-limited on shared free pool)
+      - 404 NotFoundError  (model removed or :free tier discontinued)
+    Raises HTTPException(503) only if ALL models in the chain fail.
+    """
+    model_chain = _get_model_chain()
+    
+    for i, model in enumerate(model_chain):
+        retries = 2
+        for attempt in range(retries):
+            try:
+                print(f"🤖 Trying model: {model} (attempt {attempt+1}/{retries})")
+                return client.chat.completions.create(
+                    model=model,
+                    messages=messages,
+                    **kwargs
+                )
+            except (RateLimitError, NotFoundError) as e:
+                err_type = "rate-limited (429)" if isinstance(e, RateLimitError) else "unavailable/removed (404)"
+                wait = 2 ** attempt  # 1s, 2s
+                if attempt < retries - 1 and isinstance(e, RateLimitError):
+                    print(f"⚠️  {model} {err_type}, retrying in {wait}s...")
+                    time.sleep(wait)
+                else:
+                    if i < len(model_chain) - 1:
+                        print(f"⚠️  {model} {err_type}, falling back to {model_chain[i+1]}...")
+                    else:
+                        tried = ', '.join(model_chain)
+                        print(f"❌ All models exhausted. Tried: {tried}")
+                        raise HTTPException(
+                            status_code=503,
+                            detail=(
+                                "All AI models are currently unavailable or rate-limited. "
+                                "Please wait 60 seconds and try again. "
+                                f"Tried: {tried}"
+                            )
+                        )
+                    break  # Move to next model immediately on 404
+
+
 
 
 # --- Prompts (EXACT COPY from processing_service.py) ---
@@ -77,131 +135,146 @@ IMAGE_PROMPT_TEMPLATE = BASE_PROMPT + """
 Here is the invoice (as one or more images). Extract the data from them.
 """
 
+# --- Helper to encode PIL images ---
+def encode_image(img: Image.Image) -> str:
+    """Convert any PIL image mode to JPEG-compatible RGB before base64 encoding."""
+    buffered = BytesIO()
+    # JPEG only supports RGB and L (greyscale). Convert everything else.
+    if img.mode == 'RGBA':
+        # Composite onto white background to flatten alpha
+        background = Image.new('RGB', img.size, (255, 255, 255))
+        background.paste(img, mask=img.split()[3])
+        img = background
+    elif img.mode == 'LA':
+        background = Image.new('L', img.size, 255)
+        background.paste(img, mask=img.split()[1])
+        img = background.convert('RGB')
+    elif img.mode == 'P':
+        # Palette mode — convert to RGBA first to preserve transparency, then to RGB
+        img = img.convert('RGBA')
+        background = Image.new('RGB', img.size, (255, 255, 255))
+        background.paste(img, mask=img.split()[3])
+        img = background
+    elif img.mode not in ('RGB', 'L'):
+        # CMYK, YCbCr, HSV, etc.
+        img = img.convert('RGB')
+    img.save(buffered, format="JPEG", quality=90)
+    return base64.b64encode(buffered.getvalue()).decode('utf-8')
 
-# --- Generation Configuration ---
-generation_config = {
-    "temperature": 0.0,
-    "response_mime_type": "application/json",
-}
 
-
-# --- Core AI Functions (EXACT COPY) ---
+# --- Core AI Functions ---
 
 def get_invoice_data_from_text(text: str) -> InvoiceExtractionResponse:
     """
-    Sends text to Gemini and returns validated Pydantic model.
-    EXACT COPY from processing_service.py
+    Sends text to OpenRouter and returns validated Pydantic model.
     """
     
     # Check if client is initialized
     if client is None:
         raise HTTPException(
             status_code=500,
-            detail="Gemini API client not initialized. Please check your GOOGLE_API_KEY."
+            detail="OpenRouter API client not initialized. Please check your OPENROUTER_API_KEY."
         )
     
     final_prompt = TEXT_PROMPT_TEMPLATE.format(invoice_text=text)
     
     try:
-        response = client.models.generate_content(
-            model="gemini-2.0-flash-exp",
-            contents=[final_prompt],
-            config=generation_config
+        response = _chat_with_retry(
+            messages=[{"role": "user", "content": final_prompt}],
+            response_format={"type": "json_object"},
+            temperature=0.0
         )
         
-        # Debug: Print the raw response
-        print(f"--- 🔍 Raw Gemini Response (TEXT): {response} ---")
-        print(f"--- 🔍 Response Text (TEXT): {response.text} ---")
+        json_output = response.choices[0].message.content.strip()
         
-        json_output = response.text.strip()
+        print(f"--- 🔍 Raw OpenRouter Response (TEXT): {json_output} ---")
         
-        # Check if response is empty
         if not json_output:
-            raise ValueError("Gemini returned an empty response")
+            raise ValueError("OpenRouter returned an empty response")
         
-        # Remove double curly braces if present (Gemini sometimes adds them)
+        if json_output.startswith("```json"):
+            json_output = json_output[7:-3].strip()
+        elif json_output.startswith("```"):
+            json_output = json_output[3:-3].strip()
+            
         if json_output.startswith("{{") and json_output.endswith("}}"):
             json_output = json_output[1:-1].strip()
-            print(f"--- 🔧 Removed double curly braces, cleaned output: {json_output} ---")
-        
+            
         data = json.loads(json_output)
         validated_data = InvoiceExtractionResponse(**data)
         
         print("--- ✅ Successfully processed TEXT ---")
         return validated_data
 
+    except HTTPException:
+        raise  # Re-raise 503 rate limit errors directly
     except json.JSONDecodeError as e:
         print(f"--- ❌ JSON Decode Error (TEXT): {e} ---")
-        print(f"--- 🔍 Attempted to parse: {json_output if 'json_output' in locals() else 'No output'} ---")
-        raise HTTPException(
-            status_code=500, 
-            detail=f"Failed to parse Gemini response as JSON: {e}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to parse AI response as JSON: {e}")
     except Exception as e:
         print(f"--- ❌ An error occurred during TEXT processing: {e} ---")
-        raise HTTPException(
-            status_code=500, 
-            detail=f"An internal error occurred: {e}"
-        )
+        raise HTTPException(status_code=500, detail=f"An internal error occurred: {e}")
 
 
 def get_invoice_data_from_images(images: List[Image.Image]) -> InvoiceExtractionResponse:
     """
-    Sends images to Gemini (multimodal) and returns validated data.
-    EXACT COPY from processing_service.py
+    Sends images to OpenRouter (multimodal) and returns validated data.
     """
     
     # Check if client is initialized
     if client is None:
         raise HTTPException(
             status_code=500,
-            detail="Gemini API client not initialized. Please check your GOOGLE_API_KEY."
+            detail="OpenRouter API client not initialized. Please check your OPENROUTER_API_KEY."
         )
     
-    content = [IMAGE_PROMPT_TEMPLATE]
-    content.extend(images)
+    content = [{"type": "text", "text": IMAGE_PROMPT_TEMPLATE}]
     
+    for img in images:
+        base64_img = encode_image(img)
+        content.append({
+            "type": "image_url",
+            "image_url": {
+                "url": f"data:image/jpeg;base64,{base64_img}"
+            }
+        })
+        
     try:
-        response = client.models.generate_content(
-            model="gemini-2.0-flash-exp",
-            contents=content,
-            config=generation_config
+        response = _chat_with_retry(
+            messages=[{"role": "user", "content": content}],
+            response_format={"type": "json_object"},
+            temperature=0.0
         )
         
-        # Debug: Print the raw response
-        print(f"--- 🔍 Raw Gemini Response (IMAGE): {response} ---")
-        print(f"--- 🔍 Response Text (IMAGE): {response.text} ---")
+        json_output = response.choices[0].message.content.strip()
         
-        json_output = response.text.strip()
+        print(f"--- 🔍 Raw OpenRouter Response (IMAGE): {json_output} ---")
         
-        # Check if response is empty
         if not json_output:
-            raise ValueError("Gemini returned an empty response")
+            raise ValueError("OpenRouter returned an empty response")
         
-        # Remove double curly braces if present (Gemini sometimes adds them)
+        if json_output.startswith("```json"):
+            json_output = json_output[7:-3].strip()
+        elif json_output.startswith("```"):
+            json_output = json_output[3:-3].strip()
+            
         if json_output.startswith("{{") and json_output.endswith("}}"):
             json_output = json_output[1:-1].strip()
-            print(f"--- 🔧 Removed double curly braces, cleaned output: {json_output} ---")
-        
+            
         data = json.loads(json_output)
         validated_data = InvoiceExtractionResponse(**data)
         
         print("--- ✅ Successfully processed IMAGE(S) ---")
         return validated_data
 
+    except HTTPException:
+        raise  # Re-raise 503 rate limit errors directly
     except json.JSONDecodeError as e:
         print(f"--- ❌ JSON Decode Error (IMAGE): {e} ---")
-        print(f"--- 🔍 Attempted to parse: {json_output if 'json_output' in locals() else 'No output'} ---")
-        raise HTTPException(
-            status_code=500, 
-            detail=f"Failed to parse Gemini response as JSON: {e}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to parse AI response as JSON: {e}")
     except Exception as e:
         print(f"--- ❌ An error occurred during IMAGE processing: {e} ---")
-        raise HTTPException(
-            status_code=500, 
-            detail=f"An internal error occurred: {e}"
-        )
+        raise HTTPException(status_code=500, detail=f"An internal error occurred: {e}")
 
 
 # --- Helper Functions (EXACT COPY) ---
