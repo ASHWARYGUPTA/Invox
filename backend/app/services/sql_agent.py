@@ -1,10 +1,9 @@
 """
-SQL Agent using Google Gemini
+SQL Agent using OpenRouter
 Generates and executes SQL queries for analytical questions
 """
 
-from google import genai
-from google.genai import types
+from openai import OpenAI
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from typing import Dict, Any, List
@@ -32,7 +31,7 @@ Database Schema:
   - currency (VARCHAR, default 'USD')
   - invoice_date (VARCHAR, format: YYYY-MM-DD)
   - due_date (VARCHAR, format: YYYY-MM-DD)
-  - status (VARCHAR: 'pending', 'completed', 'failed', 'verified', 'paid', 'archived')
+  - status (ENUM: 'pending', 'processing', 'completed', 'failed') — use ONLY these exact lowercase values
   - items (JSON, array of items)
   - vendor_address (VARCHAR)
   - customer_address (VARCHAR)
@@ -50,18 +49,22 @@ Generate a SQL query to answer this question. Requirements:
 4. For date comparisons, use string comparison (e.g., invoice_date >= '2024-01-01')
 5. For listing queries, limit to 50 results
 6. Use appropriate aggregations (SUM, COUNT, AVG) when needed
+7. IMPORTANT: For status comparisons, cast to text: status::text = 'pending' (NOT status = 'pending')
 
 SQL Query:
 """
     
     def __init__(self):
-        """Initialize Gemini model"""
-        api_key = settings.GOOGLE_API_KEY
+        """Initialize OpenRouter model"""
+        api_key = getattr(settings, 'OPENROUTER_API_KEY', None)
         if not api_key:
-            raise ValueError("GOOGLE_API_KEY not found in environment variables")
+            raise ValueError("OPENROUTER_API_KEY not found in environment variables")
         
-        self.client = genai.Client(api_key=api_key)
-        self.model_name = 'gemini-2.0-flash-exp'
+        self.client = OpenAI(
+            base_url="https://openrouter.ai/api/v1",
+            api_key=api_key
+        )
+        self.model_name = getattr(settings, 'LLM_MODEL', None) or getattr(settings, 'OPENROUTER_MODEL_NAME', 'google/gemma-4-26b-a4b-it:free')
     
     def query(self, user_query: str, user_id: str, db: Session) -> Dict[str, Any]:
         """
@@ -94,20 +97,24 @@ SQL Query:
             }
     
     def _generate_sql(self, user_query: str, user_id: str) -> str:
-        """Generate SQL query using Gemini"""
-        response = self.client.models.generate_content(
+        """Generate SQL query using OpenRouter"""
+        prompt = self.SQL_GENERATION_PROMPT.format(
+            query=user_query,
+            user_id=user_id
+        )
+        response = self.client.chat.completions.create(
             model=self.model_name,
-            contents=self.SQL_GENERATION_PROMPT.format(
-                query=user_query,
-                user_id=user_id
-            ),
-            config=types.GenerateContentConfig(
-                temperature=0,
-                max_output_tokens=500
-            )
+            messages=[
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.0,
+            max_tokens=500
         )
         
-        sql_query = response.text.strip()
+        message = response.choices[0].message
+        sql_query = (message.content or getattr(message, 'reasoning', None) or "").strip()
+        if not sql_query:
+            raise ValueError("LLM returned empty SQL response")
         
         # Clean up SQL query (remove markdown code blocks if present)
         if sql_query.startswith('```sql'):
@@ -118,11 +125,21 @@ SQL Query:
             sql_query = sql_query[:-3]
         
         sql_query = sql_query.strip()
-        
+
+        # Safety net: rewrite bare status comparisons to use text cast
+        # Postgres strict enums reject plain string literals; status::text = 'x' always works
+        import re
+        sql_query = re.sub(
+            r"\bstatus\s*=\s*'([^']*)'(?!\s*::)",  # matches status = 'x' but not status::text = 'x'
+            lambda m: f"status::text = '{m.group(1)}'",
+            sql_query,
+            flags=re.IGNORECASE
+        )
+
         # Ensure user_id filter is present
         if f"user_id = '{user_id}'" not in sql_query and f'user_id = "{user_id}"' not in sql_query:
             print(f"⚠️  Warning: user_id filter not found in generated SQL")
-        
+
         return sql_query
     
     def _execute_query(self, sql_query: str, db: Session) -> List[Dict]:
